@@ -1,7 +1,6 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/Zsh%20Plugin-zsh--zramdisk-blue?style=plastic">
-    <img src="https://img.shields.io/badge/Zsh-Version_%3E5.4.2-blue%3Fstyle%3Dplastic?style=plastic&labelColor=grey&color=blue
-">
+  <img src="https://img.shields.io/badge/zramdisk-blue?style=plastic&label=Zsh%20Plugin">
+  <img src="https://img.shields.io/badge/Zsh-Version_%3E5.4.2-blue%3Fstyle%3Dplastic?style=plastic&labelColor=grey&color=blue">
   <img src="https://img.shields.io/badge/Linux-blue?style=plastic&logo=linux&logoColor=black&logoSize=auto&label=Plattform&labelColor=blue&color=grey
 ">
   <img src="https://img.shields.io/badge/Version%20%E2%89%A53.1.4-blue?style=plastic&logo=linux&logoColor=black&logoSize=auto&label=Kernel&labelColor=blue&color=grey
