@@ -393,7 +393,13 @@ If you remove the `#` later, the plugin will be available again, as (all?) plugi
 
 <details><summary> ← click here</summary>
 
+Color Mode
+
 ![zramdisk menu](screenshots/menu.png)
+
+B/W Mode
+
+![zramdisk menu](screenshots/menu_bw.png)
 
 Simply press the corresponding key and the function is called immediately. No need to confirm with Enter.
 
