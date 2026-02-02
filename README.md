@@ -507,7 +507,6 @@ The configuration is written to the `zramdisk.conf` file in the plugin directory
 ```zsh
 .zsh-zramdisk/─╮               → base directory
 |              ├── LICENSE
-|              ├── README(de).md
 |              ├── README.md → this file
 │              ├── zramdisk.conf → exists only if setup has been performed
 │              ├── zramdisk.plugin.zsh
