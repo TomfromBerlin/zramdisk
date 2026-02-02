@@ -513,7 +513,6 @@ The configuration is written to the `zramdisk.conf` file in the plugin directory
 │              ├── zramdisk.plugin.zsh
 │              ╰── zramdisk.zsh
 ├──functions/─╮                → module files directory
-│             ├── animtex
 │             ├── zramdisk_animtex → animates text strings (just for fun)
 │             ├── zramdisk_benchmark → compression benchmark (info only)
 │             ├── zramdisk_cleanup → clean env when plugin is unloaded
@@ -539,7 +538,6 @@ The configuration is written to the `zramdisk.conf` file in the plugin directory
 │             ├── zramdisk_setup
 │             ├── zramdisk_size → define disk size
 │             ├── zramdisk_troubleshooting → detailed troubleshooting
-│             ├── zramdisk_troubleshooting_de
 │             ├── zramdisk_ui → ui template
 │             ├── zramdisk_umount
 │             ├── zramdisk_validate_device
@@ -547,14 +545,8 @@ The configuration is written to the `zramdisk.conf` file in the plugin directory
 │             ├── zramdisk_wrong_zsh_version → check ZSH version
 │             ├── zramdisk_zram_available → check if kernel module is available
 │             ╰── zramdisk_zramctl_missing → check if zramctl is available
-├── icons/─╮
-│          ╰── dialog-warn.png
-╰── screenshots/─╮
-                 ├── benchmark-results.png
-                 ├── debug-on.png
-                 ├── help.png
-                 ├── menu.png
-                 ╰── plugin-status.png
+╰── icons/─╮
+           ╰── dialog-warn.png
 
 
 ```
