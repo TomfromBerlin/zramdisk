@@ -1,0 +1,107 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_diagnose() {
+zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_diagnose:${ZRAMDISK_COLOR_NC} Reached function zramdisk_diagnose" >&2
+
+    emulate -L zsh
+    setopt LOCALOPTIONS
+
+# Colors for better reading
+#     if [[ -f "${ZRAMDISK_PLUGIN_DIR}"/no_color ]] ; then
+#         local ZRAMDISK_COLOR_GREEN=
+#         local ZRAMDISK_COLOR_RED=
+#         local ZRAMDISK_COLOR_YELLOW=
+#         local ZRAMDISK_COLOR_BLUE=
+#         local ZRAMDISK_COLOR_CYAN=
+#         local ZRAMDISK_COLOR_NC=
+#     else
+#         local ZRAMDISK_COLOR_GREEN=$'\e[0;32m'
+#         local ZRAMDISK_COLOR_RED=$'\e[0;31m'
+#         local ZRAMDISK_COLOR_YELLOW=$'\e[1;33m'
+#         local ZRAMDISK_COLOR_BLUE=$'\e[0;34m'
+#         local ZRAMDISK_COLOR_CYAN=$'\e[0;36m'
+#         local ZRAMDISK_COLOR_NC=$'\e[0m'
+#     fi
+
+    print "\n${ZRAMDISK_COLOR_CYAN}=== ZRAM Diagnosis started ===${ZRAMDISK_COLOR_NC}"
+
+    # 1. Kernel modules
+    print -P "\n${ZRAMDISK_COLOR_YELLOW}[1] Kernel Module Status${ZRAMDISK_COLOR_NC}"
+    if lsmod | grep -q '^zram'; then
+        print "The zRAM module has been loaded and is ${ZRAMDISK_COLOR_GREEN}available.${ZRAMDISK_COLOR_NC}"
+        print "\n${ZRAMDISK_COLOR_YELLOW}[1.1] Kernel Log Entries${ZRAMDISK_COLOR_NC}"
+        sudo dmesg | GREP_COLORS='ms=1;1' grep --color=always -i zram | tail -n 20 || print "No kernel log entries for zRAM."
+    else
+        print "zRAM module${ZRAMDISK_COLOR_RED}not${ZRAMDISK_COLOR_NC} loaded."
+        print "Unfortunately, with your current kernel configuration you cannot use zRAM devices at all."
+        print "Consider switching to a kernel with zRAM support (must be enabled at compile time)."
+    fi
+
+    # 2. Blockdevices
+    print "\n${ZRAMDISK_COLOR_YELLOW}[2] Blockdevices${ZRAMDISK_COLOR_NC}"
+    if sys_devs=($(ls /sys/block 2&>/dev/null)); then
+        print "Block devices found: ${ZRAMDISK_COLOR_BLUE} $sys_devs ${ZRAMDISK_COLOR_NC}"
+    else
+        print "${ZRAMDISK_COLOR_RED}/sys/block could not be read${ZRAMDISK_COLOR_NC}"
+    fi
+
+    # 3. Systemd Services
+        print "\n${ZRAMDISK_COLOR_YELLOW}[3] Systemd Status${ZRAMDISK_COLOR_NC}"
+    if command -v systemctl >/dev/null; then
+        systemctl is-active systemd-zram-setup.service >/dev/null 2>&1 \
+            && print -P "${ZRAMDISK_COLOR_BLUE}systemd-zram-setup.service${ZRAMDISK_COLOR_NC} is ${ZRAMDISK_COLOR_GREEN}active${ZRAMDISK_COLOR_NC}" \
+            || print -P "${ZRAMDISK_COLOR_BLUE}systemd-zram-setup.service${ZRAMDISK_COLOR_NC} is ${ZRAMDISK_COLOR_GREEN}available${ZRAMDISK_COLOR_NC} (oneshot completed), but ${ZRAMDISK_COLOR_RED}not${ZRAMDISK_COLOR_NC} running"
+    else
+        print "${ZRAMDISK_COLOR_BLUE}systemctl${ZRAMDISK_COLOR_NC} is ${ZRAMDISK_COLOR_RED}not${ZRAMDISK_COLOR_NC} available, therefore no system services could be found."
+    fi
+
+    # 4. ZRAM-Devices
+    print "\n${ZRAMDISK_COLOR_YELLOW}[4] zRAM Devices${ZRAMDISK_COLOR_NC}"
+    local -a zram_list=() dev
+    for dev in /sys/block/zram*; do
+        [[ -e "$dev" ]] && zram_list+=("${dev:t}")
+    done
+    if (( ${#zram_list[@]} > 0 )); then
+        print "zRAM devices found:  ${ZRAMDISK_COLOR_BLUE}$zram_list${ZRAMDISK_COLOR_NC}"
+            local zram_services
+            zram_services=$(sudo systemctl list-units --type=service | grep -E 'zram|zramd|systemd-zram')
+            if [[ -n "$zram_services" ]]; then
+                print "$zram_services"
+                print "\n${ZRAMDISK_COLOR_YELLOW}[4.1] zRAM devices configuration${ZRAMDISK_COLOR_NC}"
+                (( $+commands[zramctl] )) && zramctl --output-all || print "${ZRAMDISK_COLOR_RED}zramctl not found${ZRAMDISK_COLOR_NC}"
+            else
+                print "No zRAM services found."
+            fi
+    else
+        print "No zRAM devices found"
+    fi
+
+    # 5. Mounts
+    print "\n${ZRAMDISK_COLOR_YELLOW}[5] Mountpoints${ZRAMDISK_COLOR_NC}"
+    if mount | grep -q zram; then
+        mount | grep zram
+    elif (( $+commands[zramctl] )) ; then
+        local zd_name zd_mountpoint
+        zd_name=$(zramctl | awk '/SWAP/ {print $1}')
+        zd_mountpoint=$(zramctl | awk '/SWAP/ {print $7}')
+        zramctl --output-all | grep -q  SWAP && print "No zRAM devices are mounted, except ${zd_name} → ${zd_mountpoint}." || print "No zRAM devices are mounted, including no SWAP device."
+    else
+        print "${ZRAMDISK_COLOR_RED}zramctl not found${ZRAMDISK_COLOR_NC}"
+    fi
+print -P "\n${ZRAMDISK_COLOR_CYAN}== Diagnosis finished ===${ZRAMDISK_COLOR_NC}\n"
+}
+#ZRAMDISK_SCRIPT

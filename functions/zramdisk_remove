@@ -1,0 +1,268 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_remove() {
+zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_remove:${ZRAMDISK_COLOR_NC} Reached zramdisk_remove." >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+    # Collect all existing zram devices (except zram0), but first generate a fake output to signal that something is happening.
+    local i
+    i=99
+    while (( $i > 0 )); do printf "searching zram${i}...\r" ; sleep 0.01 ; : $((i--)) ; done
+    # now the actual search
+    local -a zram_devices=() dev=() title msg
+    for dev in {1..99}; do
+        [[ -e "/dev/zram${dev[@]}" ]] && zram_devices+=("/dev/zram${dev[@]}")
+    done >& /dev/null
+
+    # Check if any devices exist
+    if (( ${#zram_devices[@]} == 0 )); then
+        # No devices found - show info message
+        title=("${ZRAMDISK_COLOR_YELLOW}Remove zRAM Device${ZRAMDISK_COLOR_NC}")
+        msg=("No removable zRAM devices found.
+        [zram1-zram99]")
+        zramdisk_print_box \
+        "${title}" \
+        "info" \
+        "${msg}"
+        return
+    else
+        # Pass devices array to next function
+        zramdisk_remove_ask "${zram_devices[@]}"
+        return 0
+    fi
+}
+
+zramdisk_remove_ask() {
+zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_remove:${ZRAMDISK_COLOR_NC} Reached function zramdisk_remove_ask." >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+
+    local title body msg
+    local -a zram_devices=("$@")
+
+    title=(
+"Remove zRAM Device"
+    )
+    body=(
+"Should the removal process performed automatically
+or do you want to select a certain device?
+In both cases, the mount point ${ZRAMDISK_COLOR_BLUE}$zramdisk_dir${ZRAMDISK_COLOR_NC} is also removed."
+    )
+    msg=(
+"Select [a] to automatically remove all devices (except ${ZRAMDISK_COLOR_BLUE}/dev/zram0${ZRAMDISK_COLOR_NC}),
+       [m] to select a device, or any other key to cancel."
+    )
+    clear
+    zramdisk_print_box \
+    "${title[@]}" \
+    "${body[@]}" \
+    "" \
+    "ask" \
+    "${msg}"
+
+    read -sk choice
+    case $choice in
+        a)  zramdisk_remove_auto
+            return 0
+            ;;
+        m)  zramdisk_remove_manual "${zram_devices[@]}"
+            return 0
+            ;;
+        *)  return 0
+            ;;
+    esac
+}
+
+zramdisk_remove_manual() {
+zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_remove:${ZRAMDISK_COLOR_NC} Reached zramdisk_remove_manual." >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+
+    # Receive devices as parameters
+    local -a zram_devices=("$@")
+
+    # ----------------------------------------------------------------------
+    # Build device list with mountpoint info
+    # ----------------------------------------------------------------------
+    local -a init_lines=() d=() algo=() size=() mp=() st=() st_c
+    local dev first=1
+
+    for dev in /dev/zram*(N); do
+        d=$(basename "$dev[@]")
+        algo="$(zramctl ${dev[@]} -o ALGORITHM -n)"
+        size="$(zramctl ${dev[@]} -o DISKSIZE -n)"
+        mp="$(zramctl ${dev[@]} -o MOUNTPOINT -n)"
+
+        if [[ ${dev} == /dev/zram0 ]]; then
+            mp="$(zramctl ${dev[@]} -o MOUNTPOINT -n)" #this is not reliable and only usefull for swap devices
+        elif
+            # Let's have a fallback with check of /proc/self/mountinfo
+            [[ -z "${mp[@]}" || "${mp[@]}" == "-" || "${mp[@]}" == "[SWAP]" ]]; then
+            mp=$(cat /proc/self/mountinfo | grep /dev/loop | awk '{print $5}')
+        fi
+
+        if [[ -e "/sys/block/$d/initstate" ]]; then
+            st=$(<"/sys/block/$d/initstate")
+            (( ${st} == 1 )) && st_c="${ZRAMDISK_COLOR_GREEN}${st}" || st_c="${ZRAMDISK_COLOR_GREY}${st}"
+
+            if (( first )) ; then
+            init_lines+=$(printf '%s  →  initstate=%s %s %s %s' "${ZRAMDISK_COLOR_BLUE}${d}${ZRAMDISK_COLOR_NC}" "${st_c}${ZRAMDISK_COLOR_NC}" "${algo}" "${size}" "${mp[@]}")
+            first=0
+            else
+            init_lines+=$(printf '\n%s  →  initstate=%s %s %s %s' "${ZRAMDISK_COLOR_BLUE}${d}${ZRAMDISK_COLOR_NC}" "${st_c}${ZRAMDISK_COLOR_NC}" "${algo}" "${size}" "${mp[@]}")
+            fi
+        fi
+    done
+
+    # ----------------------------------------------------------------------
+    # Display selection box
+    # ----------------------------------------------------------------------
+    local -a title body footer msg chosen_device
+    title=(
+        "${ZRAMDISK_COLOR_YELLOW}Remove zRAM Device${ZRAMDISK_COLOR_NC}"
+    )
+    body=(
+"Available zRAM devices:
+
+${init_lines}"
+    )
+
+    footer=("Select a device to remove...")
+
+    msg=("This will unmount and remove the selected device!")
+
+    zramdisk_print_box \
+    "${title[@]}" \
+    "${body[@]}" \
+    "${footer[@]}" \
+    "info" \
+    "${msg}"
+
+    # ----------------------------------------------------------------------
+    # User selection with select
+    # ----------------------------------------------------------------------
+    echo
+    PS3="${ZRAMDISK_COLOR_YELLOW}Your choice (number): ${ZRAMDISK_COLOR_NC}"
+    select chosen_device in "${zram_devices[@]}" "Cancel"; do
+        if [[ "$chosen_device" == "Cancel" ]]; then
+            echo "${ZRAMDISK_COLOR_CYAN}Operation cancelled.${ZRAMDISK_COLOR_NC}"
+            return 0
+        elif [[ -n "$chosen_device" ]]; then
+            # Confirmation
+#            local title footer msg
+            title="${ZRAMDISK_COLOR_RED}Confirm Removal${ZRAMDISK_COLOR_NC}"
+            footer=("Selected device: ${ZRAMDISK_COLOR_CYAN}${chosen_device##*/}${ZRAMDISK_COLOR_NC}")
+            msg=(
+"Are you sure you want to remove this device?${ZRAMDISK_COLOR_YELLOW}
+            Confirm [y/N]: ${ZRAMDISK_COLOR_NC}"
+)
+
+        zramdisk_print_box \
+        "${title}" \
+        "" \
+        "${footer[@]}" \
+        "ask" \
+        "${msg[@]}"
+
+        read -rqs confirm
+
+            if [[ "$confirm" =~ ^[Yy]$ ]]; then
+                print -P "Unmounting and removing ${chosen_device}..."
+
+                # try unmount
+                sudo umount "$chosen_device" 2>/dev/null
+
+                # Try zramctl first, fallback to hot_remove
+                if ! sudo zramctl --reset "$chosen_device" >&/dev/null; then
+                    # Extract device number (e.g., "1" from "/dev/zram1")
+                    local dev_num="${chosen_device##*/zram}"
+                    echo "$dev_num" | sudo tee /sys/class/zram-control/hot_remove > /dev/null
+                fi
+                print -P "${chosen_device} removed."
+                return 0
+            else
+                echo "${ZRAMDISK_COLOR_CYAN}Operation cancelled.${ZRAMDISK_COLOR_NC}"
+                return 1
+            fi
+        else
+            echo "${ZRAMDISK_COLOR_RED}Invalid selection.${ZRAMDISK_COLOR_NC}"
+        fi
+    done
+    return 0
+}
+
+zramdisk_remove_auto() {
+zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_remove:${ZRAMDISK_COLOR_NC} Reached zramdisk_remove_auto." >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+
+    local -a title body footer i zram_devices=() device
+    local msg
+
+    # try devices from 1 to 99
+    # Array for devices
+    zram_devices=()
+
+    # Phase 1: collect devices
+    for i in {1..99}; do
+        [[ -e "/dev/zram${i}" ]] && zram_devices+=("/dev/zram${i}")
+    done >&/dev/null
+
+    # Phase 2: Unmount and reset all collected devices
+    for device in "${zram_devices[@]}"; do
+        # extract device number
+        i="${device##*/zram}"
+
+        # 1) try unmount
+        sudo umount "$device" >&/dev/null
+
+        # 2) try zramctl reset
+        if ! sudo zramctl --reset "$device" 2>/dev/null; then
+            # 3) Fallback: hot_remove
+            echo "$i" | sudo tee /sys/class/zram-control/hot_remove >/dev/null 2>&1
+        fi
+    done
+
+    # Phase 3: remove mountpoint directory
+    [[ -d "$HOME/zramdisk" ]] && command rm -d "$HOME/zramdisk" || {
+    [[ -d "$HOME/zramdisk${i}" ]] && command rm -d "$HOME/zramdisk${i}"
+    }
+    # Message box
+    if [[ -n "$(zramctl ${dev[@]} -o MOUNTPOINT -n)" ]]; then
+        title=("${ZRAMDISK_COLOR_YELLOW}Cleanup completed${ZRAMDISK_COLOR_NC}")
+        msg=("All devices except ${ZRAMDISK_COLOR_BLUE}/dev/zram0${ZRAMDISK_COLOR_CYAN} have been removed.")
+        clear
+        zramdisk_print_box \
+        "${title}" \
+        "" \
+        "" \
+        "info" \
+        "${msg}"
+    else
+        title=("${ZRAMDISK_COLOR_YELLOW}Cleanup completed${ZRAMDISK_COLOR_NC}")
+        msg=("All devices have been removed.")
+        clear
+        zramdisk_print_box \
+        "${title}" \
+        "" \
+        "" \
+        "info" \
+        "${msg}"
+    fi
+    return 0
+}
+#ZRAMDISK_SCRIPT

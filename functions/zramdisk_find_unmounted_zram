@@ -1,0 +1,52 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_find_unmounted_zram() {
+zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_find_unmounted_zram:${ZRAMDISK_COLOR_NC} Reached function zramdisk_find_unmounted_zram" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+
+    local -a dev=() size=() mnt=() size_raw=()
+
+    # Check all existing /dev/zram*
+    for dev in {99..1}; do
+        # Dertermine size (DISKSIZE)
+        size_raw+="$(zramctl /dev/zram"${dev}" --raw --output DISKSIZE -n)"
+
+        # Remove everything from output except numbers
+        size+="${size_raw[@]//[^0-9]/}"
+
+        # Not configured? → there is no size
+        [[ -z "${size[@]}" || "${size[@]}" -eq 0 ]] && continue
+
+        # If size > 0 then the device is configured and mounted
+        ((size > 0)) && mnt+=$(grep -w zramdisk /proc/self/mounts | awk '{print $2}')
+        # If $mnt is empty → Device is *configured but not mounted*
+        # Write the result to the variable ($zram_device) to use it for the mount process
+        if [[ -z ${mnt[@]} ]]; then
+           # print -P "Found ${dev[@]}, but it is not mounted."
+            typeset -g zram_device="/dev/zram${dev[@]}"
+            typeset -g zramdisk_size="${size_raw[@]}"
+            return 0
+#         else
+#             print -P "${dev[@]} is already mounted on ${mnt[@]}"
+#             return 0
+        fi
+    done >&/dev/null
+    #print -P "No unmounted devices found."
+    return 0
+}
+#ZRAMDISK_SCRIPT

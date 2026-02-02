@@ -1,0 +1,38 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_current_choice() {
+zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_current_choice:${ZRAMDISK_COLOR_NC} Reached function zramdisk_current_choice" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+    local -a title body footer
+
+    title=("Current settings")
+    body=(
+" ✅ Size configuration: ${ZRAMDISK_COLOR_GREEN}$zramdisk_size${ZRAMDISK_COLOR_NC}
+ ✅ Algorithm configuration: ${ZRAMDISK_COLOR_GREEN}$zramdisk_comp_alg${ZRAMDISK_COLOR_NC}"
+    )
+    footer=(
+"${ZRAMDISK_COLOR_BLUE}Algorithm configuration${ZRAMDISK_COLOR_NC} displays default
+settings if nothing has been selected."
+    )
+
+    zramdisk_print_box \
+        "${title[@]}" \
+        "${body[@]}" \
+        "${footer[@]}"
+}
+#ZRAMDISK_SCRIPT

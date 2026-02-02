@@ -1,0 +1,25 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_determine_mountpoint() {
+zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_determine_mountpoint:${ZRAMDISK_COLOR_NC} Reached function zramdisk_determine_mountpoint" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+    local dir
+    dir="${1:-${zramdisk_dir:-$HOME/zramdisk}}"
+
+    [[ -d "${dir}" ]] || mkdir -p --mode=755 "${dir}"
+}

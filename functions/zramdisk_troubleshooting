@@ -1,0 +1,266 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_troubleshooting() {
+    emulate -L zsh
+    setopt LOCALOPTIONS
+
+cat <<EOF
+    ${ZRAMDISK_COLOR_MAGENTA}╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+    ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC} First, let's clarify something: we're talking about devices that are stored in RAM and are, by nature, temporary.    ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC}
+    ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC} There are at least two ways to do this:                                                                              ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC}
+    ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC} 1. by creating a system service                                                                                      ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC}
+    ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC} 2. by using a utility program (in this case zramctl).                                                                ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC}
+    ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC} The difference is that a drive that was created as a system service is automatically created                         ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC}
+    ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC} or initialized every time the operating system starts. However, drives that are created with                         ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC}
+    ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC} zramctl are not automatically loaded or initialized when the system starts and must be recreated.                    ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC}
+    ${ZRAMDISK_COLOR_MAGENTA}╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯${ZRAMDISK_COLOR_NC}
+
+ ⚡ "${ZRAMDISK_COLOR_YELLOW}TL;DR${ZRAMDISK_COLOR_CYAN} Common reasons why a ZRAM device is not created (long story short) ⚡
+
+    ${ZRAMDISK_COLOR_YELLOW}Device already exists${ZRAMDISK_COLOR_NC} → check: ${ZRAMDISK_COLOR_BLUE}ls /dev/zram*
+    ${ZRAMDISK_COLOR_YELLOW}Device is initialized${ZRAMDISK_COLOR_NC} → check: ${ZRAMDISK_COLOR_BLUE} sudo cat /sys/block/zram*/initstate${ZRAMDISK_COLOR_NC}
+        This will only give some lines (one per device) with 1 (= initialized) and 0 (= uninitialized)
+        Lets try to make the output more informative:${ZRAMDISK_COLOR_BLUE}
+EOF
+cat <<'EOF'
+        for i in {0..4}; do sudo echo "Device zram${i}: init state = $(cat /sys/block/zram${i}/initstate 2>/dev/null)" ; done
+EOF
+cat <<EOF
+        ${ZRAMDISK_COLOR_NC}Increase the array {0..4}, e.g. to {0..9}, if you have more devices.
+        Possible outputs:
+        ${ZRAMDISK_COLOR_CYAN}Device zramX: init state = 0${ZRAMDISK_COLOR_NC} → uninitialized      → should be configurable without any problems
+        ${ZRAMDISK_COLOR_CYAN}Device zramX: init state = 1${ZRAMDISK_COLOR_NC} → initialized        → size and algorithm can no longer be changed
+        ${ZRAMDISK_COLOR_CYAN}Device zramX: init state =  ${ZRAMDISK_COLOR_NC} → no device present
+
+    ${ZRAMDISK_COLOR_YELLOW}Kernel does not allow another ${ZRAMDISK_COLOR_BLUE}hot_add${ZRAMDISK_COLOR_NC} → "No permission" ≠ permission error (misleading error msg)
+    ${ZRAMDISK_COLOR_YELLOW}zramctl only shows initialized devices${ZRAMDISK_COLOR_NC} → uninitialized ones do not appear
+    ${ZRAMDISK_COLOR_YELLOW}zram module loaded without ${ZRAMDISK_COLOR_BLUE}num_devices${ZRAMDISK_COLOR_NC} → dynamic devices may not work reliably
+    ${ZRAMDISK_COLOR_YELLOW}system service manages ZRAM${ZRAMDISK_COLOR_NC} → check ${ZRAMDISK_COLOR_BLUE}systemctl status zram*${ZRAMDISK_COLOR_NC}
+    However, it should be possible to create zRAM devices using ${ZRAMDISK_COLOR_BLUE}zramctl -f <size> <algorithm>${ZRAMDISK_COLOR_NC}
+    ${ZRAMDISK_COLOR_YELLOW}mem_used_total is missing${ZRAMDISK_COLOR_NC} → normal if ${ZRAMDISK_COLOR_BLUE}initstate=0${ZRAMDISK_COLOR_NC}
+
+    You can use ${ZRAMDISK_COLOR_BLUE}dmesg${ZRAMDISK_COLOR_NC} to show whether ${ZRAMDISK_COLOR_BLUE}hot_add${ZRAMDISK_COLOR_NC} was actually executed.
+    The following command will do the trick:
+    ${ZRAMDISK_COLOR_BLUE}sudo dmesg | GREP_COLORS='ms=1;1' grep --color=always -i zram | tail -n 20${ZRAMDISK_COLOR_NC}
+    To simplify things, a switch was added, which executes exactly this command:
+    ${ZRAMDISK_COLOR_BLUE}zramdisk diag --dmsg${ZRAMDISK_COLOR_NC}
+
+   ${ZRAMDISK_COLOR_MAGENTA}╭────────────────────────────────────────────────────────────────────╮
+   │${ZRAMDISK_COLOR_NC}In short: If ${ZRAMDISK_COLOR_BLUE}hot_add${ZRAMDISK_COLOR_NC} fails → kernel may ${ZRAMDISK_COLOR_RED}not${ZRAMDISK_COLOR_NC} support dynamic devices ${ZRAMDISK_COLOR_MAGENTA}│
+   ╰────────────────────────────────────────────────────────────────────╯${ZRAMDISK_COLOR_NC}
+EOF
+echo
+sleep 3s
+zramdisk_animtex "Press any key and I'll show you how deep the rabbit hole goes, or CTRL+C..."
+read -sk 1
+echo
+clear
+cat <<EOF
+
+ ⚡ ${ZRAMDISK_COLOR_CYAN}Common reasons why a zRAM device is not created (with explanations)${ZRAMDISK_COLOR_NC}
+
+ 1️⃣ ${ZRAMDISK_COLOR_YELLOW}Are there already zRAM devices?${ZRAMDISK_COLOR_NC}
+    Check: ${ZRAMDISK_COLOR_BLUE}ls /dev/zram*${ZRAMDISK_COLOR_NC}
+    If devices appear here, they are not necessarily initialized. Only initialized devices are blocking.
+
+ 2️⃣ ${ZRAMDISK_COLOR_YELLOW}Is the device already initialized?${ZRAMDISK_COLOR_NC}
+    Check: ${ZRAMDISK_COLOR_BLUE}cat /sys/block/zramX/initstate 2>/dev/null${ZRAMDISK_COLOR_NC} (replace X with a number, e.g., 1)
+    Or test multiple possible devices with this loop:
+    ${ZRAMDISK_COLOR_BLUE}
+EOF
+cat <<'EOF'
+    for i in {0..4}; do sudo echo "Device zram\${i}: init state = $(cat /sys/block/zram\${i}/initstate 2>/dev/null)" ; done
+EOF
+cat <<EOF
+    ${ZRAMDISK_COLOR_NC}
+    Possible outputs:
+    ${ZRAMDISK_COLOR_GREEN}Device zramX: init state = 0${ZRAMDISK_COLOR_NC} → uninitialized      → should be configurable without any problems
+    ${ZRAMDISK_COLOR_GREEN}Device zramX: init state = 1${ZRAMDISK_COLOR_NC} → initialized        → size and algorithm can no longer be changed
+    ${ZRAMDISK_COLOR_GREEN}Device zramX: init state =  ${ZRAMDISK_COLOR_NC} → no device present
+
+ 3️⃣ ${ZRAMDISK_COLOR_YELLOW}Does ${ZRAMDISK_COLOR_BLUE}hot_add${ZRAMDISK_COLOR_NC} ${ZRAMDISK_COLOR_YELLOW}exist and is it working?${ZRAMDISK_COLOR_NC}
+    Check if the kernel provides the interface:
+    ${ZRAMDISK_COLOR_BLUE}ls /sys/class/zram-control/hot_add${ZRAMDISK_COLOR_NC}
+
+    If it exists, try creating a new device with:
+    ${ZRAMDISK_COLOR_BLUE}echo 1 | sudo tee /sys/class/zram-control/hot_add${ZRAMDISK_COLOR_NC}
+
+    Possible results:
+    OK: New device created → /dev/zram(n) appears
+    "No permission" → misleading
+                    ╰─→ can mean:
+                            - kernel does not allow another hot_add
+                            - limit for dynamic devices reached
+                            - module loaded with a static number
+
+    No error, but no new device: → Kernel ignores the hot_add (occurs sometimes)
+
+    Possible cause:
+    - Incorrect number of devices in the kernel module
+    - The number of zram devices that can be created is determined when the module is loaded.
+
+    However, ${ZRAMDISK_COLOR_BLUE}echo 1 | sudo tee /sys/class/zram-control/hot_add${ZRAMDISK_COLOR_NC} may not work.
+
+EOF
+read -sk 1
+cat <<EOF
+    If you try to check with ${ZRAMDISK_COLOR_BLUE}sudo cat /sys/class/zram-control/hot_add${ZRAMDISK_COLOR_NC},
+    you may get one of the following outputs:
+    "1" → means zram1 was created.
+    ".../hot_add: No such file or directory" → the module is not loaded.
+
+    And yes indeed, with cat you create a device. This is confusing, but it is the way it works.
+    ‼️ ${ZRAMDISK_COLOR_RED}And it can be or is a security issue, because the ability to read the
+    ${ZRAMDISK_COLOR_BLUE}/sys/class/zram-control/hot_add file${ZRAMDISK_COLOR_RED} can create zRAM device nodes in the /dev/ directory.
+    Continually reading the device may consume a large amount of system memory and cause the
+    Out-of-Memory (OOM) killer to activate and terminate random userspace processes, possibly
+    making the system inoperable. ${ZRAMDISK_COLOR_WHITE_FLASH}You have been warned!${ZRAMDISK_COLOR_NC} ‼️
+    Further information at
+    ${ZRAMDISK_COLOR_BLUE_BOLD}https://www.lucabruno.net/posts/2020-09-20/cve-2020-10781-retrospective/${ZRAMDISK_COLOR_NC}
+    and
+    ${ZRAMDISK_COLOR_BLUE_BOLD}https://www.cve.org/CVERecord?id=CVE-2020-10781${ZRAMDISK_COLOR_NC}
+    - and it's still true for ${ZRAMDISK_COLOR_YELLOW}Linux Kernel 6.18.1-2${ZRAMDISK_COLOR_NC}
+
+    But there is more stuff to confuse you.
+    You can try to remove the device with ${ZRAMDISK_COLOR_BLUE}echo 1 >/sys/class/zram-control/hot_remove${ZRAMDISK_COLOR_NC}
+
+    ${ZRAMDISK_COLOR_NC}But in the end, you might only get a "Permission denied" message, and the device(s) will continue
+    to lurk there. And as if enough confusion hadn't already been caused, the problem is probably not
+    permissions, but one of the following reasons:
+        - the kernel doesn't allow another ${ZRAMDISK_COLOR_BLUE}hot-add${ZRAMDISK_COLOR_NC}
+        - the limit has been reached
+        - he module was loaded without specifying ${ZRAMDISK_COLOR_BLUE}num_devices${ZRAMDISK_COLOR_NC}.
+    The error message "Permission denied" is therefore more misleading than helpful.
+
+    ${ZRAMDISK_COLOR_BLUE}zramctl --reset zramX${ZRAMDISK_COLOR_NC} is shorter, easier to remember, and guaranteed to work, even if zramctl doesn't
+    display the device, and you can use the following loop, if you just want to remove the last device:${ZRAMDISK_COLOR_BLUE}
+EOF
+cat <<'EOF'
+    for i in {9..1}; do sudo umount -q "$HOME"/zramdisk && sudo zramctl --reset /dev/zram"$i" 2>/dev/null ; done 2>/dev/null
+EOF
+cat <<EOF
+    ${ZRAMDISK_COLOR_NC}Increase the array, e.g. to {20..1}, if more devices are present.
+    To remove multiple devices at once, call ${ZRAMDISK_COLOR_BLUE}zramdisk remove${ZRAMDISK_COLOR_NC} and select the option to
+    automatically remove devices (press the ${ZRAMDISK_COLOR_BLUE}a${ZRAMDISK_COLOR_NC} key in the dialog box).
+EOF
+read -sk 1
+cat <<EOF
+
+ 4️⃣ ${ZRAMDISK_COLOR_YELLOW}Is the zRAM module loaded with a fixed number of devices?${ZRAMDISK_COLOR_NC}
+    Some kernels load zRAM without parameters — then hot_add is limited.
+    Check: ${ZRAMDISK_COLOR_BLUE}cat /sys/module/zram/parameters/num_devices${ZRAMDISK_COLOR_NC}
+    If the file doesn't exist: the module was built without module parameters → dynamic device counting is a matter of luck.
+    If the file exists: ${ZRAMDISK_COLOR_BLUE}number${ZRAMDISK_COLOR_NC} = maximum number of zRAM devices (more hot_adds → not possible)
+
+ 5️⃣ ${ZRAMDISK_COLOR_YELLOW}Is a service already running that manages zram?${ZRAMDISK_COLOR_NC}
+    Some systems use systemd-zram-setup or similar services.
+    Check:
+                ${ZRAMDISK_COLOR_BLUE}systemctl status zram${ZRAMDISK_COLOR_NC}
+                ${ZRAMDISK_COLOR_BLUE}systemctl status zramd${ZRAMDISK_COLOR_NC}
+                ${ZRAMDISK_COLOR_BLUE}systemctl status systemd-zram-setup${ZRAMDISK_COLOR_NC}
+
+    If a service exists:
+    - often enforces certain parameters
+    - automatically creates devices
+    - prevents hot_add (sometimes)
+    - you should still be able to create new (non-persistent) devices using zramctl
+
+ 6️⃣ ${ZRAMDISK_COLOR_YELLOW}Checking how devices were actually loaded (kernel logs)${ZRAMDISK_COLOR_NC}
+    ${ZRAMDISK_COLOR_BLUE}sudo dmesg | grep zram${ZRAMDISK_COLOR_NC}
+    Typical entries:
+            Added device: zram0
+            Detected capacity change
+            Added swap
+            Added device: zram1 (via hot_add)
+
+    If dmesg shows zram1/zram2/..., but zramctl does not → the device is physically present, but not initialized.
+
+ 7️⃣ ${ZRAMDISK_COLOR_YELLOW}zramctl isn't showing a device${ZRAMDISK_COLOR_NC}
+    zramctl only displays fully initialized devices. Uninitialized devices often don't appear in the list.
+    Therefore check with ${ZRAMDISK_COLOR_BLUE}ls /dev/zram*${ZRAMDISK_COLOR_NC} AND ${ZRAMDISK_COLOR_BLUE}ls /sys/block/${ZRAMDISK_COLOR_NC}
+    If a device exists, but zramctl doesn't know about it → the device was created, but never initialized.
+EOF
+read -sk 1
+cat <<EOF
+
+ 8️⃣ ${ZRAMDISK_COLOR_BLUE}mem_used_total${ZRAMDISK_COLOR_NC} ${ZRAMDISK_COLOR_YELLOW}does not exist${ZRAMDISK_COLOR_NC}
+    If ${ZRAMDISK_COLOR_BLUE}sudo cat /sys/block/zram<id>/mem_used_total${ZRAMDISK_COLOR_NC} gives "File or directory not found", then this is
+    normal as long as ${ZRAMDISK_COLOR_BLUE}initstate=0${ZRAMDISK_COLOR_NC}. This file only appears after initialization.
+
+ 9️⃣ ${ZRAMDISK_COLOR_YELLOW}When to use num_devices${ZRAMDISK_COLOR_NC}
+    hot_add:
+            - produces misleading errors
+            - is often limited to exactly one device per boot
+            - not guaranteed / disabled on some distributions
+
+    If a system requires multiple zRAM devices, ${ZRAMDISK_COLOR_BLUE}num_devices=X${ZRAMDISK_COLOR_NC} (where X is the number of devices)
+    is the only 100 percent stable option when loading the module.
+
+    However:
+            → The module can only be restarted if everything is disabled (including swap on zram0).
+            → Therefore, this method is not suitable if you don't want to change existing configurations. In this case,
+              try ${ZRAMDISK_COLOR_BLUE}sudo zramctl -f -s 4G -a zstd${ZRAMDISK_COLOR_NC}. This will search for the next free device id and create
+              a new device with this id, a size of 4 GiB and zstd as compression algorithm.
+EOF
+read -sk 1
+cat <<EOF
+
+    ${ZRAMDISK_COLOR_YELLOW}How to manually create a zRAM device${ZRAMDISK_COLOR_NC}
+
+    When the hot-add module is loaded:
+    ${ZRAMDISK_COLOR_BLUE}echo 1 | sudo tee /sys/class/zram-control/hot_add${ZRAMDISK_COLOR_NC} or
+    ${ZRAMDISK_COLOR_BLUE}sudo cat /sys/class/zram-control/hot_add${ZRAMDISK_COLOR_NC}
+    This will create an uninitialized device and you have to provide parameters with additional commands like
+    ${ZRAMDISK_COLOR_BLUE}echo 4G > /sys/block/zram1/disksize
+    echo zstd > /sys/block/zram1/comp_algorithm${ZRAMDISK_COLOR_NC}
+
+    And again:
+    you can do the same with the this one-liner: ${ZRAMDISK_COLOR_BLUE}sudo zramctl -f -s 4G -a zstd${ZRAMDISK_COLOR_NC}
+    This will create a zRAM device with a size of 4GiB and compression algorithm zstd.
+
+    Alternative if the module is not loaded or the command does not work for any reason:
+    Check with ${ZRAMDISK_COLOR_BLUE}swapon -s${ZRAMDISK_COLOR_NC}, if zRAM is active and used for swap.
+    If nessecary, disable it and then run ${ZRAMDISK_COLOR_BLUE}sudo modprobe zram${ZRAMDISK_COLOR_NC}.
+
+    If multiple devices are to be created, run:
+    ${ZRAMDISK_COLOR_BLUE}sudo modprobe zram num_devices=2${ZRAMDISK_COLOR_NC} (creates two devices) or
+    ${ZRAMDISK_COLOR_BLUE}sudo modprobe zram num_devices=3${ZRAMDISK_COLOR_NC} (creates three devices) or
+    ${ZRAMDISK_COLOR_BLUE}sudo modprobe zram num_devices=4${ZRAMDISK_COLOR_NC} ...you know the drill.
+
+   ${ZRAMDISK_COLOR_MAGENTA}╭──────╮
+   │${ZRAMDISK_COLOR_YELLOW} Note ${ZRAMDISK_COLOR_MAGENTA}╰─────────────────────────────────────────────────────────────────────────────────────────╮
+   │${ZRAMDISK_COLOR_NC} The plugin does not offer functionality for creating zRAM devices with ${ZRAMDISK_COLOR_BLUE}modprobe${ZRAMDISK_COLOR_NC}, as we cannot  ${ZRAMDISK_COLOR_MAGENTA}│
+   │${ZRAMDISK_COLOR_NC} know if a swap file exists and how it was created. Of course, we could find this out, but that ${ZRAMDISK_COLOR_MAGENTA}│
+   │${ZRAMDISK_COLOR_NC} would unnecessarily bloat the code and carry a high risk of corrupting existing configurations ${ZRAMDISK_COLOR_MAGENTA}│
+   │${ZRAMDISK_COLOR_NC} when using ${ZRAMDISK_COLOR_BLUE}modprobe${ZRAMDISK_COLOR_NC}, e.g., by resetting the swap partition.                                    ${ZRAMDISK_COLOR_MAGENTA}│
+   ╰────────────────────────────────────────────────────────────────────────────────────────────────╯${ZRAMDISK_COLOR_NC}
+
+    You can have verbose overview of all initiated zRAM devices with${ZRAMDISK_COLOR_BLUE}
+EOF
+cat <<'EOF'
+
+    for i in {0..9}; do udevadm info --query=all --path=/sys/block/zram${i} 2>/dev/null ; done
+
+EOF
+cat <<EOF
+    ${ZRAMDISK_COLOR_NC}If multiple devices are present, this will produce a lot of output.
+    You can reduce the array {0..9}, for example to {0..5}, to limit the output somewhat,
+    or query a specific section, e.g., {1..3}.
+
+EOF
+}
+#ZRAMDISK_SCRIPT

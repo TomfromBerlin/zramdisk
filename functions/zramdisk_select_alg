@@ -1,0 +1,77 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_select_alg() {
+zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_select_alg:${ZRAMDISK_COLOR_NC} Reached function zramdisk_select_alg" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+    # DISABLE_MAGIC_FUNCTIONS
+    # Quote from https://github.com/ohmyzsh/wiki/blob/main/Settings.md#disable_magic_functions
+    # "'bracketed-paste-magic' and 'url-quote-magic' are two Zsh utilities that are known buggy in some Zsh versions or user setups."
+    [[ -z "${DISABLE_MAGIC_FUNCTIONS}" ]] && local DISABLE_MAGIC_FUNCTIONS="true"
+
+    local -a title body msg
+    title=("zRAM Disk Compression Algorithm")
+    body=(
+"
+${ZRAMDISK_COLOR_CYAN} 1) ${ZRAMDISK_COLOR_YELLOW} zstd ← ${ZRAMDISK_COLOR_GREEN}recommended/default
+${ZRAMDISK_COLOR_CYAN} 2) ${ZRAMDISK_COLOR_YELLOW} lz4hc ← ${ZRAMDISK_COLOR_GREY}was developed for static archives
+${ZRAMDISK_COLOR_CYAN} 3) ${ZRAMDISK_COLOR_YELLOW} lzo-rle
+${ZRAMDISK_COLOR_CYAN} 4) ${ZRAMDISK_COLOR_YELLOW} lzo
+${ZRAMDISK_COLOR_CYAN} 5) ${ZRAMDISK_COLOR_YELLOW} lz4
+${ZRAMDISK_COLOR_CYAN} 6) ${ZRAMDISK_COLOR_YELLOW} show benchmark results
+"
+    )
+    msg=("Select an option [1-6]")
+    clear
+    zramdisk_print_box \
+        "${title[@]}" \
+        "${body[@]}" \
+        "" \
+        "ask" \
+        "${msg[@]}"
+
+    read -srk choice
+    case "$choice" in
+    1) zramdisk_comp_alg="zstd" ;;
+    2) zramdisk_comp_alg="lz4hc" ;;
+    3) zramdisk_comp_alg="lzo-rle" ;;
+    4) zramdisk_comp_alg="lzo" ;;
+    5) zramdisk_comp_alg="lz4" ;;
+    6)
+        zramdisk_benchmark
+        return
+        ;;
+    *)
+        zramdisk_comp_alg="zstd"
+        local -a footer
+        footer=(
+"Unknown input. Using default algorithm → zstd.
+Press any key to continue..."
+        )
+        clear
+        zramdisk_print_box \
+            "${title[@]}" \
+            "" \
+            "${footer[@]}" \
+            "" \
+            ""
+        ;;
+    esac
+    zramdisk_current_choice
+    return 0
+}
+#ZRAMDISK_SCRIPT

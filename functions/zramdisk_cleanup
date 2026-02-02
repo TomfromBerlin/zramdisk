@@ -1,0 +1,29 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_cleanup() {
+local VARIABLES="_{comp_alg,size,dir,enabled,commands,device,kernel_logs,services,kernel,mdir,mp,debug,enabled,exists,status,present,exists,status,present,bytes,kb,ram, \
+gREEN_BOLD,GREEN,RED_BOLD,RED,YELLOW,BLUE_BOLD,BLUE,CYAN_BOLD,CYAN,MAGENTA_BOLD,MAGENTA,WHITE,WHITE_FLASH,GREY,NC,ITALIC}"
+unset title body footer msg zram_device cfg plugin_enabled num_devices init_lines i d algo size mp first dev dir input chosen_device default_percent default_gib min_bytes bytes _4_gib _1_gib _25perc \
+    total_{bytes,kb,ram} \
+    status_{kernel,mdir,mp} \
+    show_{kernel_logs,services} \
+    hot_add_{exists,status,present} \
+    zramdisk_{comp_alg,size,dir,plugin_dir,device,enabled,commands,debug} \
+    ZRAMDISK_COLOR_{GREEN_BOLD,GREEN,RED_BOLD,RED,YELLOW,BLUE_BOLD,BLUE,CYAN_BOLD,CYAN,MAGENTA_BOLD,MAGENTA,WHITE,WHITE_FLASH,GREY,NC,ITALIC}
+    #printf '\e[?1049l' # disable alternate buffer
+    return 0
+}

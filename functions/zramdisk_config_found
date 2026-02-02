@@ -1,0 +1,66 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_config_found() {
+zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_setup:${ZRAMDISK_COLOR_NC} Reached function zramdisk_config_found" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+        # Check if setup has already been run
+    zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_setup:${ZRAMDISK_COLOR_NC} Reached zramdisk_setup#Verify device exists and is configured" >&2
+
+    # Output
+    local -a title body footer msg input
+
+    title=(
+    "${ZRAMDISK_COLOR_YELLOW}Configuration file found.${ZRAMDISK_COLOR_NC}"
+    )
+    body=(
+    "
+${ZRAMDISK_COLOR_YELLOW}Should the device ${ZRAMDISK_COLOR_BLUE}${zram_device}${ZRAMDISK_COLOR_YELLOW} be created?
+
+Current configuration:
+zRAM Device = ${zram_device}
+zRAM Disk Size = ${zramdisk_size}
+Compression Algorithm = ${zramdisk_comp_alg}
+Mountpoint = ${zramdisk_dir}
+"
+    )
+
+    footer=(
+"Select ${ZRAMDISK_COLOR_BLUE}[Y]${ZRAMDISK_COLOR_NC}es or ${ZRAMDISK_COLOR_RED}[n]${ZRAMDISK_COLOR_NC}o.
+${ZRAMDISK_COLOR_RED}CTRL-C${ZRAMDISK_COLOR_NC} to abort"
+    )
+
+    msg=(
+"If you select ${ZRAMDISK_COLOR_RED}no${ZRAMDISK_COLOR_NC},
+the config file will be deleted and
+a new configuration will be created."
+    )
+    clear
+    zramdisk_print_box \
+    "${title[@]}" \
+    "${body[@]}" \
+    "${footer[@]}" \
+    "info" \
+    "${msg[@]}"
+
+    read -sk input
+    echo
+    if [[ "$input" != [Yy] ]] ; then
+        rm -f "$config_file"
+    fi
+    zramdisk_create_disk
+}

@@ -1,0 +1,55 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_create() {
+zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_create:${ZRAMDISK_COLOR_NC} Reached function zramdisk_create" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+
+    # Determine size
+    zramdisk_size || {
+        local -a title msg
+        title=("Exitcode: ${ZRAMDISK_COLOR_RED}${?}${ZRAMDISK_COLOR_NC}")
+        msg=("${ZRAMDISK_COLOR_RED}zramdisk_create:${ZRAMDISK_COLOR_NC} zramdisk_size FAILED!")
+        zramdisk_print_box \
+            "${title[@]}" \
+            "" \
+            "" \
+            "err" \
+            "${msg[@]}"
+        return 1
+    }
+    # select algorithm (if it hasn't been set up yet)
+    # set standard algorithms for compression
+    : "${zramdisk_comp_alg:=zstd}"
+    zramdisk_select_alg || {
+        local -a title footer msg
+        title=("Exitcode: ${ZRAMDISK_COLOR_RED}${?}${ZRAMDISK_COLOR_NC}")
+        footer=("${ZRAMDISK_COLOR_RED}zramdisk_create:${ZRAMDISK_COLOR_NC} zramdisk_select_alg FAILED!")
+        msg=("Using standard algorithm → ${ZRAMDISK_COLOR_BLUE}${zramdisk_comp_alg}${ZRAMDISK_COLOR_NC}.")
+        clear
+        zramdisk_print_box \
+            "${title[@]}" \
+            "" \
+            "${footer[@]}" \
+            "err" \
+            "${msg[@]}"
+        return 1
+    }
+    read -sk 1
+
+    zramdisk_create_disk
+}

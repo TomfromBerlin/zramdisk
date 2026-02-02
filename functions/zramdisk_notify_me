@@ -1,0 +1,89 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_notify_me() {
+zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_notify_me:${ZRAMDISK_COLOR_NC} Reached function zramdisk_notify_me" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+    # ----------------------------------------------------------------------
+    # Display selection box
+    # ----------------------------------------------------------------------
+    local -a title body footer alert
+    title=(
+        "${ZRAMDISK_COLOR_YELLOW}Notification setting${ZRAMDISK_COLOR_NC}"
+    )
+    body=(
+"${ZRAMDISK_COLOR_GREEN} Desktop notification
+${ZRAMDISK_COLOR_WHITE} Each time a terminal session is started,
+ a short message will appear on your desktop.
+
+${ZRAMDISK_COLOR_GREEN} Prompt Notification
+${ZRAMDISK_COLOR_WHITE} A small reminder will appear above your prompt.
+${ZRAMDISK_COLOR_WHITE} (The message will be inserted; your original
+${ZRAMDISK_COLOR_WHITE} prompt configuration will remain unchanged.)${ZRAMDISK_COLOR_NC}
+
+${ZRAMDISK_COLOR_GREEN} Off
+${ZRAMDISK_COLOR_WHITE} Turn notification off
+
+${ZRAMDISK_COLOR_YELLOW} Note:${ZRAMDISK_COLOR_NC} Unless you select 'Cancel',
+       Zsh will be completely reloaded.
+    ")
+    footer=(
+        "${ZRAMDISK_COLOR_WHITE} Choose the method by which you want to
+be notified that zramdisk is loaded.${ZRAMDISK_COLOR_NC}"
+    )
+    clear
+    zramdisk_print_box \
+        "${title[@]}" \
+        "${body[@]}" \
+        "${footer[@]}"
+
+    # ----------------------------------------------------------------------
+    # User selection with select
+    # ----------------------------------------------------------------------
+    echo
+    PS3="${ZRAMDISK_COLOR_BLUE}Your choice (number): ${ZRAMDISK_COLOR_NC}"
+    select alert in "Desktop" "Prompt" "Off" "Cancel"; do
+        if [[ "${alert}" == "Cancel" ]]; then
+            clear
+            zramdisk_menu
+        elif [[ "${alert}" == "Desktop" ]]; then
+            [[ -f "${ZRAMDISK_PLUGIN_DIR}/zramdisk_notify_p" ]] && command rm "${ZRAMDISK_PLUGIN_DIR}/zramdisk_notify_p"
+            touch "${ZRAMDISK_PLUGIN_DIR}/zramdisk_notify_d"
+            clear
+            exec zsh
+        elif [[ "${alert}" == "Prompt" ]]; then
+            [[ -f "${ZRAMDISK_PLUGIN_DIR}/zramdisk_notify_d" ]] && command rm "${ZRAMDISK_PLUGIN_DIR}/zramdisk_notify_d"
+            touch "${ZRAMDISK_PLUGIN_DIR}/zramdisk_notify_p"
+            clear
+            exec zsh
+        elif [[ "${alert}" == "Off" ]]; then
+            local -A marker_files()
+            local marker_file
+            for marker_file in zramdisk_nofify_d zramdisk_notify_p; do
+                [[ -f "${ZRAMDISK_PLUGIN_DIR}/${marker_file}" ]] && marker_files+=("${ZRAMDISK_PLUGIN_DIR}/${marker_file}")
+            done
+
+            if (( ${#marker_files[@]} > 0 )); then
+                command rm "${marker_files[@]}"
+            fi
+            clear
+            exec zsh
+        fi
+        return 0 # make sure to exit after selection
+    done
+}
+#ZRAMDISK_SCRIPT

@@ -1,0 +1,41 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_debug() {
+    emulate -L zsh
+    setopt LOCALOPTIONS
+
+    (( zramdisk_debug )) || return
+
+    # Stackinfo: file:line:function
+    local row_nr info file line func
+    row_nr=${funcfiletrace[1]#*:}
+    info=${funcfiletrace[1]}
+    file=${info%%:*}
+    line=${info#*:}; line=${line%%:*}
+    func=${info##*:}
+
+    # Variations of debug output
+    # Define the msg output inside the script like "zramdisk_debug "${ZRAMDISK_COLOR_CYAN}script_name:${ZRAMDISK_COLOR_NC} Reached function <name>" >&2"
+
+    # Let's have verbose information collected automatically
+    print -P "${ZRAMDISK_COLOR_RED}DEBUG:${ZRAMDISK_COLOR_NC} $* [${file:t}:${line} → ${func}]" >&2
+
+    # or just the msg defined in the script followed by the row number (starting at row 1 of the script, not the function!)
+    #print -P "${ZRAMDISK_COLOR_RED}DEBUG:${ZRAMDISK_COLOR_NC} $* ${row_nr})" >&2
+}
+# trap zramdisk_debug DEBUG
+#ZRAMDISK_SCRIPT

@@ -1,0 +1,63 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_perform_mount() {
+zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_perform_mount:${ZRAMDISK_COLOR_NC} Reached function zramdisk_perform_mount" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+# Go through the arguments
+    local -a dev dir fs_type
+# Check for existing filesystem and type
+    fs_type=$(sudo blkid -s TYPE -o value "${zram_device}" 2>/dev/null)
+    if [[ -z "$fs_type" ]]; then
+    zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_perform_mount:${ZRAMDISK_COLOR_NC} Reached make file system" >&2
+        print -P " ${ZRAMDISK_COLOR_CYAN}zramdisk:${ZRAMDISK_COLOR_NC} No filesystem found, creating ext4 → ${zram_device}" >&2
+        sudo mkfs.ext4 -q -L ZRAMDRIVE -m 0 "${zram_device}" "${zramdisk_size}" || {
+            print -P "${ZRAMDISK_COLOR_RED}mkfs.ext4 FAILED!${ZRAMDISK_COLOR_NC} Exitcode: ${ZRAMDISK_COLOR_RED}${?}${ZRAMDISK_COLOR_NC}"
+            return 1
+        }
+    else
+        print -P " ${ZRAMDISK_COLOR_CYAN}zramdisk:${ZRAMDISK_COLOR_NC} Filesystem already exists: ${fs_type}" >&2
+    fi
+
+    # Create a mount point and mount the zRAM device.
+    if ! [[ -d "${zramdisk_dir}" ]]; then
+        print -P " ${ZRAMDISK_COLOR_CYAN}zramdisk:${ZRAMDISK_COLOR_NC} No mountpoint found, creating mountpoint" >&2
+        typeset -g zramdisk_dir="${HOME}/zramdisk"
+        zramdisk_determine_mountpoint || {
+            print -P " Creation of mountpoint ${ZRAMDISK_COLOR_RED}failed${ZRAMDISK_COLOR_NC}.\n Make sure you have write access. Exitcode: ${ZRAMDISK_COLOR_RED}${?}${ZRAMDISK_COLOR_NC}"
+            return 1
+        }
+    fi
+    [[ -z "${dev}" ]] && dev="${zram_device}"
+    [[ -z "${dir}" ]] && dir="${zramdisk_dir:-$HOME/zramdisk}"
+    if [[ $(cat /proc/self/mountinfo | grep "${dir}" | awk '{print $5}') ]] 2>/dev/null; then
+        echo "${ZRAMDISK_COLOR_RED}Error${ZRAMDISK_COLOR_NC}: $dir is already a mountpoint"
+        return 1
+    fi
+    sudo mount -o noatime,nodiratime "${dev}" "${dir}" >& /dev/null
+    zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_perform_mount:${ZRAMDISK_COLOR_NC} Mounting process completed." >&2
+
+    # Fix ownership
+    sudo chown "$USER:$USER" "$dir" || {
+        print -P " ${ZRAMDISK_COLOR_RED}zramdisk:${ZRAMDISK_COLOR_NC} chown FAILED with exit code ${?}" >&2
+        return 1
+    }
+    zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_perform_mount:${ZRAMDISK_COLOR_NC} Ownership of $dir fixed." >&2
+    return 0
+}
+
+#ZRAMDISK_SCRIPT

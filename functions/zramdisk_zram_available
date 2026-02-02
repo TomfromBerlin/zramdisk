@@ -1,0 +1,61 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_zram_available() {
+zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk:${ZRAMDISK_COLOR_NC} Reached script zramdisk_zram_available" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+    local title msg
+    if [[ -f "${ZRAMDISK_PLUGIN_DIR}"/missing_zramctl_d ]]; then
+        command rm "${ZRAMDISK_PLUGIN_DIR}"/missing_zramctl_d &>/dev/null
+    fi
+
+    if [[ -f "${ZRAMDISK_PLUGIN_DIR}"/missing_zramctl_p ]]; then
+        command rm "${ZRAMDISK_PLUGIN_DIR}"/missing_zramctl_p &>/dev/null
+    fi
+
+    if [[ -f "${ZRAMDISK_PLUGIN_DIR}"/zramdisk_notify_d ]]; then
+        title="zramdisk Plugin Message"
+        msg="✅ The zramdisk plugin is ready."
+
+        gdbus call --session \
+            --dest=org.freedesktop.Notifications \
+            --object-path=/org/freedesktop/Notifications \
+            --method=org.freedesktop.Notifications.Notify \
+            "zramdisk Message" 0 "$title" "$msg" \
+            '[]' '{"urgency": <2>}' 2000
+    fi
+
+    if [[ -n "${ZRAMDISK_ORIGINAL_PS1}" ]]; then
+        PS1="${ZRAMDISK_ORIGINAL_PS1}"
+    fi
+
+# Check if PS1 is already modified (prevents duplication on reload) and if colors wanted
+# if colors not wanted
+    if [[ -f "${ZRAMDISK_PLUGIN_DIR}"/zramdisk_notify_p && -f "${ZRAMDISK_PLUGIN_DIR}"/no_color ]] ; then
+        # Save original ONLY if not already saved
+        [[ -z "${ZRAMDISK_ORIGINAL_PS1}" ]] && ZRAMDISK_ORIGINAL_PS1="$PS1"
+        # Prepend info box to PS1
+        PS1=$'╭────────────────────╮\n│ %F{blue}√%f %F{white}zramdisk loaded.%f │\n╰────────────────────╯\n'"$ZRAMDISK_ORIGINAL_PS1"
+    elif [[ -f "${ZRAMDISK_PLUGIN_DIR}"/zramdisk_notify_p && ! -f "${ZRAMDISK_PLUGIN_DIR}"/no_color ]] ; then
+        # Save original ONLY if not already saved
+        [[ -z "${ZRAMDISK_ORIGINAL_PS1}" ]] && ZRAMDISK_ORIGINAL_PS1="$PS1"
+        # Prepend info box to PS1
+        PS1=$'%F{blue}╭────────────────────╮%f\n%F{blue}│ %F{green}√%f zramdisk loaded. %F{blue}│%f\n%F{blue}╰────────────────────╯%f\n'"$ZRAMDISK_ORIGINAL_PS1"
+    fi
+
+}
+#ZRAMDISK_SCRIPT

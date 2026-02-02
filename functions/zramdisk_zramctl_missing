@@ -1,0 +1,94 @@
+
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+# zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_zramctl_missing:${ZRAMDISK_COLOR_NC} Reached script zramdisk_zramctl_missing" >&2
+# if [[ ! -f "${ZRAMDISK_PLUGIN_DIR}/missing_zramctl" ]]; then
+#     touch "${ZRAMDISK_PLUGIN_DIR}/missing_zramctl"
+#     gdbus call --session \
+#         --dest=org.freedesktop.Notifications \
+#         --object-path=/org/freedesktop/Notifications \
+#         --method=org.freedesktop.Notifications.Notify \
+#         "" 0 "dialog_error" "zramdisk Plugin Message" "The program 'zramctl' was not found. \
+#          The plugin will be unloaded. Consider installing the 'util-linux' package, as it contains the required program." \
+#         '[]' '{"urgency": <2>}' 8000 &>/dev/null &
+# else
+#     PS1_temp="${PS1}"
+#     PS1=$(printf '%s\n%s\n%s\n' " Message from zramdisk Plugin: %F{red}X%f zramctl is missing." " Consider installing the %F{blue}util-linux%f package" "${PS1_temp}")
+#     echo -n
+#     PS1=${PS1_temp}
+# fi
+
+zramdisk_zramctl_missing() {
+zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_zramctl_missing:${ZRAMDISK_COLOR_NC} Reached function zramdisk_zramctl_missing" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+    local missing_zramctl_d="${ZRAMDISK_PLUGIN_DIR}/missing_zramctl_d"
+    local missing_zramctl_p="${ZRAMDISK_PLUGIN_DIR}/missing_zramctl_p"
+
+    # Desktop notification (only once ever)
+    if [[ ! -f "${missing_zramctl_d}" || ! "${missing_zramctl_p}" ]]; then
+        touch "${missing_zramctl_d}" &>/dev/null
+
+        if command -v gdbus &>/dev/null; then
+            gdbus call --session \
+                --dest=org.freedesktop.Notifications \
+                --object-path=/org/freedesktop/Notifications \
+                --method=org.freedesktop.Notifications.Notify \
+                "" 0 "dialog_error" "zramdisk Plugin Message" "The program 'zramctl' was not found. \
+                The plugin will be unloaded. Consider installing the 'util-linux' package, \
+                as it contains the required program." \
+                '[]' '{"urgency": <2>}' 8000 &>/dev/null
+        fi
+    fi
+
+    # Modify PS1 only once per shell session
+    if [[ ! -f "$missing_zramctl_p" ]]; then
+        touch "$missing_zramctl_p"
+
+        # Check if PS1 is already modified (prevents duplication on reload)
+        if [[ "$PS1" != *"zramdisk Plugin"* ]]; then
+            # Save original PS1
+            typeset -g ZRAMDISK_ORIGINAL_PS1="$PS1"
+
+            # Prepend warning box to PS1
+            PS1=$'%F{red}╭─ zramdisk Plugin: zramctl missing ─╮%f\n%F{red}│%f    Install: %F{blue}util-linux%f package     %F{red}│%f\n%F{red}╰────────────────────────────────────╯%f\n'"$PS1"
+            PS1="${ZRAMDISK_ORIGINAL_PS1}" && unset ZRAMDISK_ORIGINAL_PS1
+        fi
+    fi
+
+    # Cleanup session markers on shell exit
+    trap "rm -f '$missing_zramctl_?'" EXIT
+}
+
+zramdisk_restore_prompt() {
+zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_zramctl_missing:${ZRAMDISK_COLOR_NC} Reached function zramdisk_restore_prompt" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+
+    if [[ -n "$ZRAMDISK_ORIGINAL_PS1" ]]; then
+        PS1="$ZRAMDISK_ORIGINAL_PS1"
+        unset ZRAMDISK_ORIGINAL_PS1
+
+        # Remove marker file
+        rm -f "${ZRAMDISK_PLUGIN_DIR}/missing_zramctl_p"
+
+        print -P "%F{green}✓ Prompt restored%f"
+    else
+        print -P "%F{yellow}⚠ No modified prompt found%f"
+    fi
+}
+#ZRAMDISK_SCRIPT

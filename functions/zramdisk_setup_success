@@ -1,0 +1,23 @@
+zramdisk_setup_success() {
+    emulate -L zsh
+    setopt LOCALOPTIONS
+
+    zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_setup:${ZRAMDISK_COLOR_NC} Reached function zramdisk_setup_success" >&2
+    local -a title body footer
+
+    title=("${ZRAMDISK_COLOR_YELLOW}Congratulation 🎉 Setup completed.${ZRAMDISK_COLOR_NC}")
+
+    body=(
+        "Device: ${ZRAMDISK_COLOR_BLUE}$zram_device${ZRAMDISK_COLOR_NC}
+mounted on: ${ZRAMDISK_COLOR_BLUE}$zramdisk_dir${ZRAMDISK_COLOR_NC}"
+    )
+
+    footer=("✅ ${ZRAMDISK_COLOR_GREEN} Your zRAM drive is ready to be used.${ZRAMDISK_COLOR_NC}")
+
+    zramdisk_print_box \
+        "${title[@]}" \
+        "${body[@]}" \
+        "${footer[@]}" \
+        ""
+    return 0
+}

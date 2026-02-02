@@ -1,0 +1,100 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_create_disk() {
+zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_create:${ZRAMDISK_COLOR_NC} Reached function zramdisk_create_disk" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+    local dev
+    if [[ $device_is_mounted == true ]]; then break ; fi
+    # create zRAM Device
+    if [[ -n "$zramdisk_size" && -n "${zramdisk_comp_alg}" ]]; then
+        sudo zramctl --find -s "${zramdisk_size}" -a "${zramdisk_comp_alg}"
+        typeset -g zram_device
+        for dev in {99..1}; do zram_device="$(zramctl zram${dev} -o NAME -n)" >&/dev/null; done >&/dev/null
+    fi || {
+        local -a title body msg
+        title=("${ZRAMDISK_COLOR_RED}zramctl FAILED!${ZRAMDISK_COLOR_NC}")
+        body=(
+"In function zramdisk_create_disk: ${ZRAMDISK_COLOR_RED}zramctl FAILED${ZRAMDISK_COLOR_NC}
+with Exitcode: ${ZRAMDISK_COLOR_RED}${?}${ZRAMDISK_COLOR_NC}")
+        msg=(
+"Run ${ZRAMDISK_COLOR_BLUE}zramdisk errors${ZRAMDISK_COLOR_NC} and/or ${ZRAMDISK_COLOR_BLUE}zramdisk trouble${ZRAMDISK_COLOR_NC} for possible reasons.
+You can also run ${ZRAMDISK_COLOR_BLUE}zramdisk diagnose${ZRAMDISK_COLOR_NC} to see, what's going on."
+        )
+        clear
+        zramdisk_print_box \
+            "${title[@]}" \
+            "${body[@]}" \
+            "" \
+            "err" \
+            "${msg[@]}"
+        return 1
+    }
+
+    zramdisk_prepare_mount || {
+        local -a title body msg
+        title=("${ZRAMDISK_COLOR_RED}zramctl FAILED!${ZRAMDISK_COLOR_NC}")
+        body=(
+"${ZRAMDISK_COLOR_RED}zramdisk_prepare_mount FAILED${ZRAMDISK_COLOR_NC}
+with Exitcode: ${ZRAMDISK_COLOR_RED}${?}${ZRAMDISK_COLOR_NC}")
+        msg=(
+"Run ${ZRAMDISK_COLOR_BLUE}zramdisk errors${ZRAMDISK_COLOR_NC} and/or ${ZRAMDISK_COLOR_BLUE}zramdisk trouble${ZRAMDISK_COLOR_NC} for possible reasons.
+You can also run ${ZRAMDISK_COLOR_BLUE}zramdisk diagnose${ZRAMDISK_COLOR_NC} to see, what's going on."
+        )
+        clear
+        zramdisk_print_box \
+            "${title[@]}" \
+            "${body[@]}" \
+            "" \
+            "err" \
+            "${msg[@]}"
+        return 1
+    }
+
+    local -a title body footer msg
+    title=(
+        "zRAM Disk Configuration & Create Status"
+    )
+    body=(
+"${ZRAMDISK_COLOR_GREEN} Device created:            ${ZRAMDISK_COLOR_YELLOW}${zram_device}
+${ZRAMDISK_COLOR_GREEN} Mountpoint on:             ${ZRAMDISK_COLOR_YELLOW}${zramdisk_dir}
+${ZRAMDISK_COLOR_GREEN} zRAM Disk Size:            ${ZRAMDISK_COLOR_YELLOW}${zramdisk_size}
+${ZRAMDISK_COLOR_GREEN} Compression Algorithm:     ${ZRAMDISK_COLOR_YELLOW}${zramdisk_comp_alg}
+
+Configuration will be written to
+${ZRAMDISK_COLOR_BLUE}${config_file}${ZRAMDISK_COLOR_NC}"
+    )
+
+    footer=("${ZRAMDISK_COLOR_GREEN}Creation completed successfully.${ZRAMDISK_COLOR_NC}")
+    msg=(
+"
+Press any key to write config..."
+    )
+    clear
+    zramdisk_print_box \
+        "${title[@]}" \
+        "${body[@]}" \
+        "${footer[@]}" \
+        "" \
+        "${msg[@]}"
+
+    read -srk 1
+
+    zramdisk_write_config
+    return 0
+}
+#ZRAMDISK_SCRIPT

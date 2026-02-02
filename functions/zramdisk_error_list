@@ -1,0 +1,112 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+
+zramdisk_error_list() {
+    emulate -L zsh
+    setopt LOCALOPTIONS
+    local title body footer dollar_sign
+    dollar_sign=$(print -P '\$%s'"5")
+    title=("⁉️ ${ZRAMDISK_COLOR_RED}Error list${ZRAMDISK_COLOR_NC}")
+    body=("
+1. ${ZRAMDISK_COLOR_RED}Device already exists${ZRAMDISK_COLOR_NC}
+   Symptom:
+   zramctl: /dev/zramX: No matching device found
+   but ${ZRAMDISK_COLOR_BLUE}ls /dev/zram*${ZRAMDISK_COLOR_NC} shows the device.
+   ${ZRAMDISK_COLOR_CYAN}Cause:${ZRAMDISK_COLOR_NC}
+   The device was created but not initialized.
+
+2. ${ZRAMDISK_COLOR_RED}Device is already initialized${ZRAMDISK_COLOR_NC}
+   Symptom:
+   zramctl refuses to change the size/algorithm.
+   Check: ${ZRAMDISK_COLOR_BLUE}cat /sys/block/zramX/initstate${ZRAMDISK_COLOR_NC}
+   → 1 = initialized
+   → 0 = uninitialized
+   ${ZRAMDISK_COLOR_CYAN}Cause:${ZRAMDISK_COLOR_NC}
+   An initialized device cannot be reconfigured.
+
+3. ${ZRAMDISK_COLOR_RED}hot_add does not exist or is limited${ZRAMDISK_COLOR_NC}
+   Symptom:
+   ${ZRAMDISK_COLOR_BLUE} echo 1 | sudo tee /sys/class/zram-control/hot_add${ZRAMDISK_COLOR_NC}
+   → Permission denied
+   ${ZRAMDISK_COLOR_CYAN}Cause:${ZRAMDISK_COLOR_NC} Not permissions, but:
+   - Kernel does not allow another hot_add
+   - Limit reached
+   - Module loaded without num_devices
+
+   ${ZRAMDISK_COLOR_YELLOW} The Kernel returns a misleading error!${ZRAMDISK_COLOR_NC}
+
+4. ${ZRAMDISK_COLOR_RED}zramctl does not display the device${ZRAMDISK_COLOR_NC}
+   Symptom:
+   zramctl only lists /dev/zram0,
+   but ${ZRAMDISK_COLOR_BLUE}ls /dev/${ZRAMDISK_COLOR_NC} shows, e.g., zram1 and zram2.
+   ${ZRAMDISK_COLOR_CYAN}Cause:${ZRAMDISK_COLOR_NC}
+   zramctl only displays initialized devices.
+
+5. ${ZRAMDISK_COLOR_RED}mem_used_total not found${ZRAMDISK_COLOR_NC}
+   Symptom:
+   cat: .../mem_used_total: File not found
+   ${ZRAMDISK_COLOR_CYAN}Cause:${ZRAMDISK_COLOR_NC}
+   Device is not yet initialized
+   → ${ZRAMDISK_COLOR_GREEN}totally normal behavior${ZRAMDISK_COLOR_NC}
+
+6. ${ZRAMDISK_COLOR_RED}zRAM is managed by a service${ZRAMDISK_COLOR_NC}
+   Symptom:
+   Changes do not take effect, or devices are reset.
+   ${ZRAMDISK_COLOR_CYAN}Cause:${ZRAMDISK_COLOR_NC} A service such as systemd-zram-setup
+          or zramd manages zRAM.
+   Check: ${ZRAMDISK_COLOR_BLUE}systemctl status zram*${ZRAMDISK_COLOR_NC}
+
+7. ${ZRAMDISK_COLOR_RED}zramctl does not show all mountpoints${ZRAMDISK_COLOR_NC}
+   Symptom:
+   ${ZRAMDISK_COLOR_BLUE}zramctl --output-all${ZRAMDISK_COLOR_NC} doesn't show mountpoints other than [SWAP].
+   ${ZRAMDISK_COLOR_CYAN}Cause:${ZRAMDISK_COLOR_NC} That's just how it is. zRAM devices are not mounted directly,
+          but as loop devices. Therefore, /dev/zramX has no mount point.
+   Check: ${ZRAMDISK_COLOR_BLUE}cat /proc/self/mountinfo | grep zram | awk '{print ${dollar_sign}}'${ZRAMDISK_COLOR_NC}
+
+8. ${ZRAMDISK_COLOR_RED}num_devices is missing${ZRAMDISK_COLOR_NC}
+   Symptom:
+   /sys/module/zram/parameters/num_devices → does not exist.
+   ${ZRAMDISK_COLOR_CYAN}Cause:${ZRAMDISK_COLOR_NC}
+   Kernel builds module without parameters
+   → dynamic devices may be unreliable or limited.
+
+9. ${ZRAMDISK_COLOR_RED}Kernel creates device, but zramctl can't find it${ZRAMDISK_COLOR_NC}
+   Symptom:
+   ${ZRAMDISK_COLOR_BLUE}zramdisk diag --dmsg${ZRAMDISK_COLOR_NC} shows ${ZRAMDISK_COLOR_CYAN}Added device: zramX${ZRAMDISK_COLOR_NC},
+   but zramctl refuses to load it.
+   ${ZRAMDISK_COLOR_CYAN}Cause:${ZRAMDISK_COLOR_NC}
+   Device exists in the kernel, but is uninitialized.
+
+10. ${ZRAMDISK_COLOR_RED}Module cannot be loaded with num_devices${ZRAMDISK_COLOR_NC}
+   Symptom:
+   modprobe num_devices=4 → not found
+   ${ZRAMDISK_COLOR_CYAN}Cause:${ZRAMDISK_COLOR_NC}
+   Incorrect syntax
+   → must be: ${ZRAMDISK_COLOR_BLUE}modprobe zram num_devices=4${ZRAMDISK_COLOR_NC}, or any number,
+   and the module must be unloaded beforehand
+   → ${ZRAMDISK_COLOR_YELLOW}swap must be disabled!${ZRAMDISK_COLOR_NC}
+")
+footer=("Learn more at
+${ZRAMDISK_COLOR_BLUE}https://wiki.archlinux.org/title/Zram${ZRAMDISK_COLOR_NC}")
+
+    clear
+    zramdisk_print_box \
+    "${title}" \
+    "${body}" \
+    "${footer}"
+}
+#ZRAMDISK_SCRIPT

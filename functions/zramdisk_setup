@@ -1,0 +1,171 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_setup() {
+    zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_setup:${ZRAMDISK_COLOR_NC} Reached function zramdisk_setup" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+
+    # DISABLE_MAGIC_FUNCTIONS
+    [[ -n "${DISABLE_MAGIC_FUNCTIONS}" ]] && local DISABLE_MAGIC_FUNCTIONS="true"
+
+    # 1. config found?
+    # zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_setup:${ZRAMDISK_COLOR_NC} Reached zramdisk_setup#check for config file" >&2
+    if [[ -f "${ZRAMDISK_PLUGIN_DIR}/zramdisk.conf" ]]; then
+        # Verify if device is configured
+        typeset -g config_file zram_device zramdisk_size zramdisk_comp_alg
+        config_file="${ZRAMDISK_PLUGIN_DIR}/zramdisk.conf"
+        source "${config_file}"
+        zram_device=$(grep -q zram_device "${config_file}") | sed 's/zram_device=//' 2>/dev/null
+        zramdisk_dir=$(grep -q zramdisk_dir "${config_file}") | sed 's/zramdisk_dir=//' 2>/dev/null
+        zramdisk_size=$(grep -q zramdisk_size "${config_file}") | sed 's/zramdisk_size=//' 2>/dev/null
+        zramdisk_comp_alg=$(grep -q zramdisk_comp_alg "${config_file}") | sed 's/zramdisk_comp_alg=//' 2>/dev/null
+        # Verify if device still exists
+        (zramctl "${zram_device}" -o NAME -n >&/dev/null && zramdisk_prepare_mount) || zramdisk_config_found
+    else
+        # Starting setup
+        zramdisk_setup_start
+    fi
+    return 0
+}
+
+zramdisk_setup_start() {
+    emulate -L zsh
+    setopt LOCALOPTIONS
+    zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_setup:${ZRAMDISK_COLOR_NC} Reached function zramdisk_setup_start" >&2
+    local -a d algo size=() mp=() dev=() st_c zram_devices=()
+    for dev in {1..99}; do
+        [[ -e "/dev/zram${dev}" ]] && zram_devices+=("/dev/zram${dev}")
+    done
+    zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_setup:${ZRAMDISK_COLOR_NC} Reached function zramdisk_setup_start - for dev zram_devices in done" >&2
+    # Check if any devices exist
+    if ((${#zram_devices[@]} != 0)); then
+        for dev in "${zram_devices[@]}"; do
+            d=$(basename "$dev")
+            algo=$(zramctl "${dev}" -o ALGORITHM -n)
+            size_raw=$(zramctl "${dev}" -o DISKSIZE -n)
+
+            # Remove everything from output except numbers
+            size+="${size_raw[@]//[^0-9]/}"
+
+            # Not configured? → there is no size
+            [[ -z "${size[@]}" || "${size[@]}" -eq 0 ]] && continue
+
+            # If size > 0 then the device is configured and mounted
+            ((size > 0)) && mnt+=$(grep -w zramdisk /proc/self/mounts | awk '{print $2}')
+            # If $mnt is empty → Device is *configured but not mounted*
+            # Write the result to the variable ($zram_device) to use it for the mount process
+            if [[ -z ${mnt[@]} ]]; then
+                # print -P "Found ${dev[@]}, but it is not mounted."
+                typeset -g zram_device="/dev/zram${dev[@]}"
+                typeset -g zramdisk_size="${size_raw[@]}"
+            fi
+
+            if [[ "${d}" == /dev/zram0 && mp="$(zramctl ${d[@]} -o MOUNTPOINT -n)" ]]; then
+                # Let's have a fallback with check of /proc/self/mountinfo
+                [[ -z "${mp[@]}" || "${mp[@]}" == "-" || "${mp[@]}" == "[SWAP]" ]] && mp=$(cat /proc/self/mountinfo | grep /dev/loop | awk '{print $5}')
+                zramdisk_dir="${mp[@]}"
+            else
+                mp=${zramdisk_dir}
+            fi
+            zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_setup:${ZRAMDISK_COLOR_NC} Reached function zramdisk_setup_start - initstate" >&2
+            if [[ -e "/sys/block/$d/initstate" ]]; then
+                local st
+                st=$(<"/sys/block/$d/initstate")
+                (("${st}" == 1)) && st_c="${ZRAMDISK_COLOR_GREEN}${st}" || st_c="${ZRAMDISK_COLOR_GREY}${st}"
+            fi
+            zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_setup:${ZRAMDISK_COLOR_NC} Reached function zramdisk_setup_start - first" >&2
+            local -a first first_line other_lines init_lines=()
+            first=1
+            first_line=$(printf '%s  →  initstate=%s %s %s %s' "${ZRAMDISK_COLOR_BLUE}${d}${ZRAMDISK_COLOR_NC}" "${st_c}${ZRAMDISK_COLOR_NC}" "${algo}" "${size}" "${mp[@]}")
+            other_lines=$(printf '%s  →  initstate=%s %s %s %s' "${ZRAMDISK_COLOR_BLUE}${d}${ZRAMDISK_COLOR_NC}" "${st_c}${ZRAMDISK_COLOR_NC}" "${algo}" "${size}" "${mp[@]}")
+            if ((first)); then
+                init_lines+=("${first_line[@]}") && first=0
+            else
+                init_lines+=("${other_lines[@]}")
+            fi
+        done
+    fi
+
+    if  [[ -n "${st}" ]] ; then
+        #zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_setup:${ZRAMDISK_COLOR_NC} Reached zramdisk_setup#query" >&2
+        #clear
+        local -a title body footer
+        local choice
+        title=("${ZRAMDISK_COLOR_YELLOW}ZRAMDISK Setup - FOUND EXISTING DEVICE${ZRAMDISK_COLOR_NC}")
+        body=("$init_lines[@]")
+        footer=("Continue anyway and create e new device? ${ZRAMDISK_COLOR_GREEN}[Y]${ZRAMDISK_COLOR_NC}es/${ZRAMDISK_COLOR_RED}[n]${ZRAMDISK_COLOR_NC}o")
+
+        clear
+        zramdisk_print_box \
+            "${title[@]}" \
+            "${body[@]}" \
+            "${footer[@]}"
+
+        read -sk choice
+
+        case "$choice" in
+        y) zramdisk_create ;;
+        n)
+            clear
+            unset title && local title=("${ZRAMDISK_COLOR_YELLOW}Setup cancelled!${ZRAMDISK_COLOR_NC}")
+            unset footer && local footer=(" ${ZRAMDISK_COLOR_BLUE}${d}${ZRAMDISK_COLOR_NC} is ready to use and mounted at
+${ZRAMDISK_COLOR_BLUE}${zramdisk_dir}.${ZRAMDISK_COLOR_NC}")
+
+            zramdisk_print_box \
+                "${title}" \
+                "${footer}"
+            return 0
+            ;;
+        esac
+    fi
+
+    zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_setup:${ZRAMDISK_COLOR_NC} Reached function zramdisk_setup_start - end of zramdisk_print_box" >&2
+
+    if [[ -o interactive || -t 0 ]]; then
+        #zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_setup:${ZRAMDISK_COLOR_NC} Reached zramdisk_setup#query" >&2
+        #clear
+        local -a title body footer
+        local choice
+        title=("${ZRAMDISK_COLOR_YELLOW}ZRAMDISK Setup${ZRAMDISK_COLOR_NC}")
+        footer=("Run setup now? ${ZRAMDISK_COLOR_GREEN}[Y]${ZRAMDISK_COLOR_NC}es/${ZRAMDISK_COLOR_RED}[n]${ZRAMDISK_COLOR_NC}o")
+
+        clear
+        zramdisk_print_box \
+            "${title[@]}" \
+            "${footer[@]}"
+
+        read -sk choice
+
+        case "$choice" in
+        y) zramdisk_create ;;
+        n)
+            unset title && title=("${ZRAMDISK_COLOR_YELLOW}Setup skipped${ZRAMDISK_COLOR_NC}")
+            unset body && body=("You can run ${ZRAMDISK_COLOR_BLUE}zramdisk setup${ZRAMDISK_COLOR_NC} later.${ZRAMDISK_COLOR_NC}")
+            unset footer && footer=("Abort.")
+
+            clear
+            zramdisk_print_box \
+                "${title}" \
+                "${body}" \
+                "${footer}"
+            return 1
+            ;;
+        esac
+    fi
+    zramdisk_setup_success
+}
+#ZRAMDISK_SCRIPT

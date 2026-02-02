@@ -1,0 +1,163 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+#                                                                        #
+# Usage: zramdisk_animtex <string>                                       #
+# Description: This script can be used to animate the display of a       #
+#              string.                                                   #
+#              It looks as if each character is selected individually,   #
+#              like a slot machine. The characters are taken from a      #
+#              character array (defined in animation_charset).           #
+#                                                                        #
+#              If the system date is a prime number, the characters are  #
+#              displayed one after the other. If the date is not a prime #
+#              number, the characters are 'selected' simultaneously.     #
+#                                                                        #
+##########################################################################
+# Helper function to check if number is prime
+is_prime() {
+zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_animtex:${ZRAMDISK_COLOR_NC} Reached function 'is_prime'." >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+    local n=$1
+
+    if ((n < 2)); then
+        return 1
+    fi
+    if ((n == 2)); then
+        return 0
+    fi
+    if ((n % 2 == 0)); then
+        return 1
+    fi
+    local i
+    for ((i=3; i*i<=n; i+=2)); do
+        if ((n % i == 0)); then
+            return 1
+        fi
+    done
+    return 0
+}
+
+# Main function
+zramdisk_animtex() {
+zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_animtex:${ZRAMDISK_COLOR_NC} Reached function 'zramdisk_animtex'." >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+
+    local -a animation_charset
+    animation_charset=(A B C D E F G H I J K L M N O P Q R S T U V W X Y Z a b c d e f g h i j k l m n o p q r s t u v w x y z 0 1 2 3 4 5 6 7 8 9)
+
+    if ! command -v tput &>/dev/null ; then
+        return
+    fi
+    local final_text="$1"
+
+    # Current day of the month (1-31)
+    local day=$(date +%d | sed 's/^0*//')
+
+    # Make decision based on whether today's date is a prime number
+    local effect iterations speed
+    if is_prime $day; then
+        effect="sequential"
+        iterations=11
+        speed=0.001
+    else
+        effect="simultaneous"
+        iterations=15
+        speed=0.05
+    fi
+
+    # Hide cursor
+    tput civis
+
+    # Calculate positioning
+    local cols=$(tput cols)
+    local padding=$(( (cols - text_length) / 8 ))
+    (( padding < 0 )) && padding=1
+    local spaces=$(printf '%*s' "$padding" '')
+
+    local -a current_text text_length text i pos
+    text_length=${#final_text}
+
+    # Initialize array (zsh arrays start at 1!)
+    for ((i=1; i<=text_length; i++)); do
+        pos=$(( RANDOM % ${#animation_charset[@]} + 1 ))
+        current_text[$i]="${animation_charset[$pos]}"
+    done
+    echo
+    if [[ "$effect" == "simultaneous" ]]; then
+        # effect 1: Roll all chars simultaneously
+        local iter
+        for ((iter=0; iter<iterations; iter++)); do
+            local display=""
+            for ((i=1; i<=text_length; i++)); do
+                if ((iter >= iterations - 2)); then
+                    current_text[$i]="${final_text[$i]}"
+                else
+                    pos=$(( RANDOM % ${#animation_charset[@]} + 1 ))
+                    current_text[$i]="${animation_charset[$pos]}"
+                fi
+                display="${display}${current_text[$i]}"
+            done
+
+            echo -ne "\r${spaces}${display}"
+            sleep $speed
+        done
+    else
+        # effect 2: Snap chars from left to right
+        local j iteration_num
+        for ((i=1; i<=text_length; i++)); do
+            for ((iteration_num=0; iteration_num<iterations; iteration_num++)); do
+                local display=""
+
+                # Keep already resolved chars
+                for ((j=1; j<i; j++)); do
+                    current_text[$j]="${final_text[$j]}"
+                    display="${display}${current_text[$j]}"
+                done
+
+                # Roll dice for current char
+                if ((iteration_num >= iterations - 1)); then
+                    current_text[$i]="${final_text[$i]}"
+                else
+                    pos=$(( RANDOM % ${#animation_charset[@]} + 1 ))
+                    current_text[$i]="${animation_charset[$pos]}"
+                fi
+                display="${display}${current_text[$i]}"
+
+                # Fill with spaces up to full length
+                local remaining=$(( text_length - i ))
+                if ((remaining > 0)); then
+                    display="${display}$(printf '%*s' "$remaining" '')"
+                fi
+
+                echo -ne "\r${spaces}${display}"
+                sleep $speed
+            done
+        done
+    fi
+
+    # print final text (just to be safe)
+    echo -ne "\r${spaces}$final_text"
+
+    # unhide cursor
+    tput cnorm
+
+    # New line at the end
+    echo
+}
+#ZRAMDISK_SCRIPT

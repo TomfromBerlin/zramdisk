@@ -1,0 +1,181 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_select_existing_device() {
+zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_select_existing_device:${ZRAMDISK_COLOR_NC} Reached function zramdisk_select_existing_device" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+
+    # 1. Search for unmounted device
+    local dev
+    typeset -g d algo size mp
+    local -a zram_devices=() init_lines=()
+    clear
+    # First, some cosmetic work as visual feedback that something is happening.
+    local i
+    i=99
+    while ((i > 0)); do
+        printf 'searching zram%s...\r' "${i}"
+        sleep 0.01
+        : $((i--))
+    done
+    unset i
+    for dev in {99..1}; do
+        [[ -e "/dev/zram${dev}" ]] && zram_devices+=("/dev/zram${dev}")
+    done
+    local -a d=() algo=() size=() mp=() dev=() st_c
+    # Check if any devices exist
+    if ((${#zram_devices[@]} != 0)); then
+        for dev in "${zram_devices[@]}"; do
+            d=$(basename "$dev")
+            algo=$(zramctl "${dev}" -o ALGORITHM -n)
+            size=$(zramctl "${dev}" -o DISKSIZE -n)
+
+        if [[ ${dev} == /dev/zram0 ]]; then
+            mp="$(zramctl ${dev[@]} -o MOUNTPOINT -n)" #this is not reliable and only usefull for swap devices
+        elif
+            # Let's have a fallback with check of /proc/self/mountinfo
+            [[ -z "${mp[@]}" || "${mp[@]}" == "-" || "${mp[@]}" == "[SWAP]" ]]; then
+            mp=$(grep -w zramdisk /proc/self/mounts | awk '{print $2}') || mp=${zramdisk_dir}
+            zramdisk_dir="${mp[@]}"
+        fi
+
+        if [[ -e "/sys/block/$d/initstate" ]]; then
+            local st
+            st=$(<"/sys/block/$d/initstate")
+            (("${st}" == 1)) && st_c="${ZRAMDISK_COLOR_GREEN}${st}" || st_c="${ZRAMDISK_COLOR_GREY}${st}"
+        fi
+
+        local -a first first_line other_lines
+        first=1
+        first_line=$(printf '%s  →  initstate=%s %s %s %s' "${ZRAMDISK_COLOR_BLUE}${d}${ZRAMDISK_COLOR_NC}" "${st_c}${ZRAMDISK_COLOR_NC}" "${algo}" "${size}" "${mp[@]}")
+        other_lines=$(printf '%s  →  initstate=%s %s %s %s' "${ZRAMDISK_COLOR_BLUE}${d}${ZRAMDISK_COLOR_NC}" "${st_c}${ZRAMDISK_COLOR_NC}" "${algo}" "${size}" "${mp[@]}")
+        if ((first)); then
+            init_lines+=("${first_line}") && first=0
+        else
+            init_lines+=("${other_lines}")
+        fi
+        done
+    else
+        local -a title body footer
+        title=("${ZRAMDISK_COLOR_YELLOW}Select zRAM Device${ZRAMDISK_COLOR_NC}")
+        footer=("No seltectable zRAM devices found. Exiting.")
+
+        clear
+        zramdisk_print_box \
+            "${title[@]}" \
+            "${footer[@]}"
+    fi
+    # ----------------------------------------------------------------------
+    # Display selection box
+    # ----------------------------------------------------------------------
+    local -a title body footer
+    title=(
+        "${ZRAMDISK_COLOR_YELLOW}Select zRAM Device${ZRAMDISK_COLOR_NC}"
+    )
+    body=(
+        "Available zRAM devices:
+
+${init_lines[@]}"
+    )
+
+    footer=(
+        "Select a device to be mounted..."
+    )
+
+    clear
+    zramdisk_print_box \
+        "${title[@]}" \
+        "${body[@]}" \
+        "${footer[@]}"
+
+    # ----------------------------------------------------------------------
+    # User selection with select
+    # ----------------------------------------------------------------------
+    echo
+    PS3="${ZRAMDISK_COLOR_YELLOW}Your choice (number): ${ZRAMDISK_COLOR_NC}"
+    select chosen_device in "${zram_devices[@]}" "Cancel"; do
+        if [[ "$chosen_device" == "Cancel" ]]; then
+            clear
+            tpwrtr "${ZRAMDISK_COLOR_CYAN}Operation cancelled by user request.${ZRAMDISK_COLOR_NC}"
+            return 0
+        elif [[ -n "$chosen_device" ]]; then
+            local mp loop l device_is_mounted
+            device_is_mounted=false
+            for l in /sys/block/loop*/loop/backing_file(N); do
+                loop=${l#/sys/block/}
+                loop=${loop%/loop/backing_file}
+
+                mp=$(awk -v dev="/dev/$loop" '$0 ~ dev {print $5}' /proc/self/mountinfo)
+
+                if [[ -n $mp ]]; then
+                    device_is_mounted=true
+                    unset title footer msg
+                    local title footer msg
+                    title="${ZRAMDISK_COLOR_RED}Device is mounted${ZRAMDISK_COLOR_NC}"
+                    footer=(
+"The selected device ${ZRAMDISK_COLOR_CYAN}${zram_device}${ZRAMDISK_COLOR_NC} is already mounted
+at ${ZRAMDISK_COLOR_BLUE}${mp}${ZRAMDISK_COLOR_NC}"
+                    )
+
+                    zramdisk_print_box \
+                        "${title[@]}" \
+                        "" \
+                        "${footer[@]}" \
+                        "" \
+                        ""
+                break
+                fi
+            break
+            done
+            # Confirmation
+            unset title footer msg
+            local title footer msg
+            mp=${zramdisk_dir}
+            title="${ZRAMDISK_COLOR_RED}Confirm Device${ZRAMDISK_COLOR_NC}"
+            footer=(
+                "Selected device: ${ZRAMDISK_COLOR_CYAN}${chosen_device##*/}${ZRAMDISK_COLOR_NC}"
+            )
+            msg=(
+                "Are you sure you want to mount this device?${ZRAMDISK_COLOR_YELLOW}
+            Confirm [Y/n]: ${ZRAMDISK_COLOR_NC}"
+            )
+
+            zramdisk_print_box \
+                "${title[@]}" \
+                "" \
+                "${footer[@]}" \
+                "ask" \
+                "${msg[@]}"
+
+            read confirm
+
+            if [[ "$confirm" == [Yy] ]]; then
+                zram_device="${chosen_device##*/}"
+                if [[ -z "${size}" || "${size}" == 0 ]] && [[ -n "$zram_device" ]]; then
+                    zramdisk_create
+                    break
+                elif [[ "$device_is_mounted" != true ]]; then
+                    zramdisk_perform_mount "$zram_device" "$zramdisk_dir"
+                    break
+                fi
+            fi
+        else
+            echo "${ZRAMDISK_COLOR_RED}Invalid selection. Please try again.${ZRAMDISK_COLOR_NC}"
+        fi
+    done
+    #return 0
+}

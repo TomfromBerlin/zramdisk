@@ -1,0 +1,35 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_plugin_unload() {
+zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_plugin_unload:${ZRAMDISK_COLOR_NC} Reached function zramdisk_plugin_unload" >&2
+    emulate -L zsh
+    local cmd
+    if [[ -n "${zramdisk_commands:-}" ]]; then
+        for cmd in ${(z)zramdisk_commands}; do
+            unalias "$cmd" 2>/dev/null
+        done
+    fi
+    fpath=("${(@)fpath:#${0:A:h}}")
+    unfunction -m 'zramdisk_*' 2>/dev/null
+    zramdisk_cleanup
+    unset zramdisk_plugin_unload
+    unset ZRAMDISK_LOADED
+    print -P '\n%F{blue} Zsh zRAMDisk Plugin%f unloaded successfully.'
+    return 0
+}
+
+#ZRAMDISK_SCRIPT

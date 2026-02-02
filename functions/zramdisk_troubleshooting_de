@@ -1,0 +1,150 @@
+zramdisk_troubleshooting() {
+local title body footer
+
+# Create device failed
+title=(
+"Troubleshooting: Create device failed"
+)
+
+body=(
+"
+⚡ TL;DR: Häufigste Ursachen, warum ein ZRAM-Device nicht erstellt wird
+   Device existiert schon → check: ls /dev/zram*
+   Device ist initialisiert → check: /sys/block/zramX/initstate (1 = gesperrt)
+   Kernel erlaubt kein weiteres hot_add → „Keine Berechtigung“ ≠ Berechtigungsfehler
+   zramctl zeigt nur initialisierte Devices → uninitialisierte erscheinen nicht
+   zram-Modul ohne num_devices geladen → dynamische Devices funktionieren nicht zuverlässig
+   Systemdienst verwaltet ZRAM → systemctl status zram* prüfen
+   mem_used_total fehlt → normal, wenn initstate=0
+   dmesg zeigt, ob hot_add wirklich ausgeführt wurde
+   Kurz gesagt:
+   Wenn hot_add fehlschlägt → Kernel unterstützt keine dynamischen Devices
+
+1️⃣ Existieren bereits ZRAM-Devices?
+   Prüfen: ls /dev/zram*
+   Wenn hier Devices auftauchen, müssen sie nicht zwangsläufig initialisiert sein.
+   Nur initialisierte Devices sind blockierend.
+
+2️⃣ Ist das Device bereits initialisiert?
+   Check: cat /sys/block/zramX/initstate ← für X eine entsprechende Zahl einsetzen (z.B. 1)
+   oder mit einer for-Schleife mehrere mögliche Devices testen:
+   % for i in {1..31}; do sudo cat /sys/block/zram${i}/initstate ; done
+
+   0 = uninitialisiert → kann problemlos konfiguriert werden
+   1 = initialisiert → Größe und Algorithmus können nicht mehr geändert werden
+   Datei oder Verzeichnis nicht gefunden = kein Device vorhanden
+
+3️⃣ Existiert hot_add und funktioniert es?
+   Prüfen, ob der Kernel das Interface bereitstellt:
+   % ls /sys/class/zram-control/hot_add
+
+   Wenn vorhanden, neues Device versuchen zu erstellen mit
+   % echo 1 | sudo tee /sys/class/zram-control/hot_add
+
+   Mögliche Ergebnisse:
+        OK: Neues Device wurde erzeugt → /dev/zram(n) erscheint
+        \"Keine Berechtigung\" → irreführend.
+        Kann bedeuten:
+        - Kernel erlaubt kein weiteres hot_add
+        - Limit für dynamische Geräte erreicht
+        - Modul wurde mit statischer Anzahl geladen
+
+        Kein Fehler, aber kein neues Device:→ Kernel ignoriert den hot_add (kommt vor)
+
+    Mögliche Ursachen:
+        Falsche Anzahl der Devices im Kernel-Modul
+        Die Anzahl der erzeugbaren zram-Devices wird beim Laden des Moduls festgelegt.
+
+        Check mit: 'sudo cat /sys/class/zram-control/hot_add'
+        mögliche Outputs:
+        \"1\" → zram1 wurde erstellt.
+        \".../hot_add: No such file or directory\" → Das Modul ist nicht geladen.
+
+
+4️⃣ Wird das ZRAM-Modul mit fester Gerätezahl geladen?
+   Manche Kernel laden zram ohne Parameter — dann ist hot_add eingeschränkt.
+   Prüfen: % cat /sys/module/zram/parameters/num_devices
+
+   Wenn Datei nicht existiert, wurde das Modul ohne Modulparameter gebaut → dynamische Gerätezahl ist Glückssache.
+   Wenn Datei existiert: Zahl = maximale Anzahl an ZRAM-Geräten (mehr hot_add → nicht möglich)
+
+
+5️⃣ Läuft bereits ein Dienst, der zram verwaltet?
+   Einige Systeme benutzen systemd-zram-setup oder ähnliche.
+   Prüfen:
+   % systemctl status zram
+   % systemctl status zramd
+   % systemctl status systemd-zram-setup
+
+   Falls ein Dienst existiert: - erzwingt oft bestimmte Parameter
+                               - erzeugt Devices automatisch
+                               - verhindert hot_add
+
+6️⃣ Prüfen, wie Devices tatsächlich geladen wurden (Kernel-Logs)
+   % dmesg | grep zram
+
+   Typische Einträge:
+   Added device: zram0
+   detected capacity change
+   adding swap
+   Added device: zram1/zram2 (durch hot_add)
+
+   Wenn dmesg zram1/zram2 zeigt, aber zramctl nicht → das Device ist physisch da, aber nicht initialisiert.
+
+7️⃣ zramctl zeigt ein Device nicht an?
+   zramctl zeigt nur initialisierte Devices vollständig an.
+   Uninitialisierte erscheinen oft nicht in der Liste.
+   Deshalb:
+   % ls /dev/zram*
+   UND
+   % ls /sys/block/
+
+   Wenn ein Device existiert, aber zramctl nichts davon weiß → Das Device wurde erstellt, aber nie initialisiert.
+
+8️⃣ mem_used_total existiert nicht?
+   Wenn:
+   % sudo cat /sys/block/zramX/mem_used_total
+   → „Datei oder Verzeichnis nicht gefunden“,
+   dann ist das normal, solange initstate=0 ist.
+   Dieses File erscheint erst nach der Initialisierung.
+
+9️⃣ Wann num_devices verwendet werden sollte (für zuverlässige Geräte-Erstellung)
+   hot_add ist:
+   - nicht garantiert
+   - oft auf genau ein Gerät pro Boot limitiert
+   - bei einigen Distros deaktiviert
+   - liefert irreführende Fehler
+
+  Wenn ein System zuverlässig mehrere ZRAM-Geräte braucht, ist num_devices=X (X = Anzahl der Devices) beim Laden des Moduls die einzig 100% stabile Option.
+  Aber:
+  → Das Modul kann nur neugestartet werden, wenn alles deaktiviert ist (inkl. swap auf zram0).
+  → Daher nicht geeignet, wenn bestehende Konfigurationen nicht angefasst werden sollen.
+
+  Verbose overview of all initiated zRAM-Devices
+  % udevadm info --query=all --path=/sys/block/zram${?}
+"
+)
+
+zramdisk_print_box \
+"${title}" \
+"${body}" \
+"${footer}"
+}
+
+zramdisk_manually() {
+
+title=("Wie ein zram-Device manuell erzeugt werden kann")
+Body=("
+Wenn das hot-add-Modul geladen ist:
+% echo 1 | sudo tee /sys/class/zram-control/hot_add
+% sudo zramctl /dev/zram1 -s 1G -a zstd ← erzeugt ein zram-Device mit einer Größe von 1 Gibibyte und dem Kompressionsalgorythmus zstd
+
+Alternative, falls das Modul nicht geladen ist oder der Befehl nicht funktioniert:
+% sudo modprobe zram
+wenn mehrere Devices erzeugt werden sollen (z.B. 2):
+% sudo modprobe zram num_devices=2
+")
+}
+zramdisk_print_box \
+"${title}" \
+"${body}"

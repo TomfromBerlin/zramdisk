@@ -1,0 +1,248 @@
+#      ##########################################################################
+#      #                                                                        #
+#      #     Everything below this line comes with no warranty of any kind.     #
+#      #                 Use these file at your own risk!                       #
+#      #                                                                        #
+#      # project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+#      ##########################################################################
+#      #                                                                        #
+#      # The MIT license applies to this and all related files.                 #
+#      # If you want to modify, remix the code, or give it to your cat, this is #
+#      # only possible under the terms of this license, and you must distribute #
+#      # a copy of this license along with the remixed or modified code.        #
+#      # Yes, even to your cat.                                                 #
+#      #                                                                        #
+#      # TomfromBerlin 2025-2026                                                #
+#      ##########################################################################
+#      ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+#      ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+#      ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+#      ||||||||||||||||__..--''``---....___||||_..._|||__||||||||||||||||||||||||
+#      ////////////_.-'    .-/";  `        ``<._  ``.''_ `.//////////////////////
+#     /////////_.-' _..--.'_    \                    `( ) )/////////////////////
+#    /////////(_..-'////(< _     ;_..__               ;/`'/////////////////////
+#   /////////////////////`-._,_)'//////``--...____..-'////////////////////////
+#  //////////////////////////////////////////////////////////////////////////
+# //////////////////////////////////////////////////////////////////////////
+#||||||||||||||||ascii|art|pussycat|made|by|Felix Lee||||||||||||||||||||||
+# \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+zramdisk_diag() {
+zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_diag:${ZRAMDISK_COLOR_NC} Reached function zramdisk_diag" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+    local show_services=0
+    local show_kernel_logs=0
+
+    # Go through the arguments
+    while (( $# )); do
+        case "$1" in
+            --services) show_services=1 ;;
+            --dmsg) show_kernel_logs=1  ;;
+            *) printf 'Unknown option for diag: %s\n' "${1}" >&2
+               return 1
+               ;;
+        esac
+        (( $# )) && shift
+    done
+
+    # ---- Normal diagnostics ----
+    zramdisk_diag_core
+
+    # ---- Additional Services? ----
+    if (( show_services )); then
+        printf '\n=== zRAM-related Services ===\n'
+        zramdisk_diag_services
+    fi
+
+    if (( show_kernel_logs )); then
+        printf '\n=== Show Kernel Logs (last 20 entries) ===\n'
+        zramdisk_diag_dmsg
+    fi
+}
+
+zramdisk_diag_core() {
+zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_diag:${ZRAMDISK_COLOR_NC} Reached function zramdisk_diag_core" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS no_aliases
+
+    # ------------------------------------------------------
+    # 1) Status queries
+    # ------------------------------------------------------
+    local status_debug plugin_enabled status_{mdir,mp,kernel}
+    # Check if plugin is loaded
+    if [[ ${zsh_loaded_plugins[-1]} != */zramdisk && -z ${fpath[(r)${0:h}]} && ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+        plugin_enabled="🟢"
+    elif
+        [[ ${zsh_loaded_plugins[-1]} != */zramdisk && -z ${fpath[(r)${0:h}]} ]] ; then
+        plugin_enabled="⚪"
+    elif
+        [[ ${zsh_loaded_plugins[-1]} == */zramdisk && -z ${fpath[(r)${0:h}]} && ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+        plugin_enabled="🔴"
+    elif
+        [[ ${zsh_loaded_plugins[-1]} == */zramdisk && -z ${fpath[(r)${0:h}]} ]] ; then
+        plugin_enabled="⚫"
+    fi
+    #Check if debug is set on or off
+    if [[ "${zramdisk_debug}" = 1 && -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+        status_debug="${ZRAMDISK_COLOR_WHITE_FLASH}⚪${ZRAMDISK_COLOR_NC}"
+    elif [[ "${zramdisk_debug}" = 1 && ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+        status_debug="${ZRAMDISK_COLOR_WHITE_FLASH}🟢${ZRAMDISK_COLOR_NC}"
+    elif
+        [[ "${zramdisk_debug}" = 0 && -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+        status_debug="⚫"
+    elif
+        [[ "${zramdisk_debug}" = 0  && ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+        status_debug="🔴"
+    fi
+    # Check default mount directory
+    [[ -n "${zramdisk_dir}" ]] && status_mdir="${ZRAMDISK_COLOR_BLUE} ${zramdisk_dir}${ZRAMDISK_COLOR_NC}" || status_mdir=" ${ZRAMDISK_COLOR_GREY}n/a${ZRAMDISK_COLOR_NC}"
+    # Check if mount directory is mounted
+    if mountpoint -q ${HOME}/zramdisk && [[ ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+        status_mp="🟢"
+    elif
+        mountpoint -q ${HOME}/zramdisk  && [[ -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]]  ; then
+        status_mp="⚪"
+    elif
+        ! mountpoint -q ${HOME}/zramdisk && [[ ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]]  ; then
+        status_mp="🔴"
+    elif
+        ! mountpoint -q ${HOME}/zramdisk && [[ -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]]  ; then
+        status_mp="⚫"
+    fi
+
+    # ------------------------------------------------------
+    # 2) Kernel module
+    # ------------------------------------------------------
+    if lsmod | grep -q '^zram'; then
+        status_kernel="${ZRAMDISK_COLOR_GREEN}zram module loaded"
+    else
+        status_kernel="zram module ${ZRAMDISK_COLOR_RED}not${ZRAMDISK_COLOR_NC} loaded"
+    fi
+
+    # ------------------------------------------------------
+    # 3) Check if module parameter was given at kernel compile time
+    # ------------------------------------------------------
+    local num_devices
+    if [[ -e /sys/module/zram/parameters/num_devices ]] ; then
+    num_devices="num_devices=$(</sys/module/zram/parameters/num_devices)"
+    else
+    num_devices="$(print -P "num_devices parameter ${ZRAMDISK_COLOR_RED}n/a")"
+    fi
+
+    # ------------------------------------------------------
+    # 4) Initializing state & configuration
+    # ------------------------------------------------------
+
+    local -a init_lines=() d=() algo=() size=() mp=() st=() dev=() st st_c
+    local first=1
+
+    for dev in /dev/zram*(N); do
+        d=$(basename "$dev")
+        algo="$(zramctl ${dev[@]} -o ALGORITHM -n)"
+        size="$(zramctl ${dev[@]} -o DISKSIZE -n)"
+        if [[ ${dev} == /dev/zram0 ]]; then
+            mp="$(zramctl ${dev[@]} -o MOUNTPOINT -n)" #this is not reliable and only usefull for swap devices
+        elif
+            # Let's have a fallback with check of /proc/self/mountinfo
+            [[ -z "${mp[@]}" || "${mp[@]}" == "-" || "${mp[@]}" == "[SWAP]" ]]; then
+            mp=$(cat /proc/self/mountinfo | grep /dev/loop | awk '{print $5}')
+        fi
+        if [[ -e "/sys/block/$d/initstate" ]]; then
+            st=$(<"/sys/block/$d/initstate")
+            (( ${st} == 1 )) && st_c="${ZRAMDISK_COLOR_GREEN}${st}${ZRAMDISK_COLOR_NC}" || st_c="${ZRAMDISK_COLOR_GREY}${st}${ZRAMDISK_COLOR_NC}"
+
+            if (( first )) ; then
+            init_lines+=$(printf '%s  →  initstate=%s %s %s %s' "${ZRAMDISK_COLOR_BLUE}${d[@]}${ZRAMDISK_COLOR_NC}" "${st_c[@]}${ZRAMDISK_COLOR_NC}" "${algo[@]}" "${size[@]}" "${mp[@]}") && first=0
+            else
+            init_lines+=$(printf '\n%s  →  initstate=%s %s %s %s' "${ZRAMDISK_COLOR_BLUE}${d[@]}${ZRAMDISK_COLOR_NC}" "${st_c[@]}${ZRAMDISK_COLOR_NC}" "${algo[@]}" "${size[@]}" "${mp[@]}")
+            fi
+        fi
+    done
+
+    [[ ${#init_lines[@]} -eq 0 ]] && init_lines=("${ZRAMDISK_COLOR_GREY}No zram devices found${ZRAMDISK_COLOR_NC}")
+
+    # ------------------------------------------------------
+    # 5) Check hot_add presence (although we use zramctl)
+    # ------------------------------------------------------
+    local hot_add_present hot_add_exists hot_add_status
+    if [[ -e /sys/class/zram-control/hot_add ]]; then
+        hot_add_present="${ZRAMDISK_COLOR_GREEN}available"
+        hot_add_exists=1
+        [[ -w /sys/class/zram-control/hot_add ]] && hot_add_status="$(print -P "is ${ZRAMDISK_COLOR_GREEN}writable")" || \
+        hot_add_status=$(print -P "is ${ZRAMDISK_COLOR_RED}not${ZRAMDISK_COLOR_NC} writable\n                      → elevated rights needed "; true)
+    else
+        hot_add_present="${ZRAMDISK_COLOR_RED}not${ZRAMDISK_COLOR_NC} available"
+        hot_add_exists=0
+        hot_add_status="$(print -P "${ZRAMDISK_COLOR_RED}hot_add not supported${ZRAMDISK_COLOR_RED}")"
+    fi
+
+    # ------------------------------------------------------
+    # 6) Output
+    # ------------------------------------------------------
+    local -a title body footer msg
+    title=(
+"${ZRAMDISK_COLOR_YELLOW}==== ZRAM status & diagnostics ===="
+    )
+    body=("
+${ZRAMDISK_COLOR_CYAN}Plugin loaded: ${plugin_enabled}     ${ZRAMDISK_COLOR_CYAN}Debug mode: ${status_debug}
+
+${ZRAMDISK_COLOR_CYAN}Kernel Module:${ZRAMDISK_COLOR_NC}        $status_kernel
+${ZRAMDISK_COLOR_CYAN}Module num_devices:${ZRAMDISK_COLOR_NC}   $num_devices
+
+${ZRAMDISK_COLOR_CYAN}hot_add:${ZRAMDISK_COLOR_NC}              $hot_add_present
+${ZRAMDISK_COLOR_CYAN}hot-add Status:${ZRAMDISK_COLOR_NC}       $hot_add_status
+
+${ZRAMDISK_COLOR_CYAN}System Services:${ZRAMDISK_COLOR_NC}      $(sudo systemctl list-units | grep -E "zram" >/dev/null && printf '%s\n' "${ZRAMDISK_COLOR_GREEN}found" || printf '%s\n' "${ZRAMDISK_COLOR_RED}none")
+
+${ZRAMDISK_COLOR_CYAN}Kernel Log:${ZRAMDISK_COLOR_NC}           $(sudo dmesg | grep -i zram >/dev/null && printf '%s\n' "${ZRAMDISK_COLOR_GREEN}dmesg entries present" || printf '%s\n' "${ZRAMDISK_COLOR_GREY}No dmesg entries")${ZRAMDISK_COLOR_NC}
+
+${ZRAMDISK_COLOR_CYAN}Default mount point: ${status_mdir}
+             ${ZRAMDISK_COLOR_CYAN}in use:  ${status_mp}
+
+${ZRAMDISK_COLOR_CYAN}Device(s):
+${init_lines[@]}
+"
+    )
+    footer=("${ZRAMDISK_COLOR_YELLOW}==== End of status & diagnostics ====")
+
+    msg=(
+"Get more zRAM related information:
+${ZRAMDISK_COLOR_CYAN}systemd services${ZRAMDISK_COLOR_NC}      → ${ZRAMDISK_COLOR_BLUE}zramdisk diag --services${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN}kernel logs${ZRAMDISK_COLOR_NC}           → ${ZRAMDISK_COLOR_BLUE}zramdisk diag --dmsg${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN}verbose diagnostics${ZRAMDISK_COLOR_NC}   → ${ZRAMDISK_COLOR_BLUE}zramdisk diagnose${ZRAMDISK_COLOR_NC}"
+    )
+
+    clear
+    zramdisk_print_box \
+    "$title" \
+    "$body" \
+    "$footer" \
+    "info" \
+    "$msg"
+}
+
+zramdisk_diag_services() {
+zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_diag:${ZRAMDISK_COLOR_NC} Reached function zramdisk_diag_services" >&2
+    if sudo systemctl list-units --type=service | grep -q zram; then
+        printf '\n'
+        sudo systemctl list-units --type=service | GREP_COLORS='ms=1;1' grep -E --color=always 'zram|zramd|systemd-zram|zram-generator'
+        printf '\n'
+        printf '%s\n' "=== zRAM devices configuration ==="
+        printf '\n'
+        zramctl --output-all
+        printf '\n'
+    else
+        printf '\n'
+        printf '%s\n' "No zRAM services found."
+        printf '\n'
+    fi
+}
+
+zramdisk_diag_dmsg() {
+zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_diag:${ZRAMDISK_COLOR_NC} Reached function zramdisk_diag_dmsg" >&2
+        printf '\n'
+        sudo dmesg | GREP_COLORS='ms=1;1' grep --color=always -i zram | tail -n 20 || printf '%s\n' "No kernel log entries for zRAM."
+        printf '\n'
+        return 0
+}
+#ZRAMDISK_SCRIPT

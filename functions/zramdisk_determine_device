@@ -1,0 +1,39 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_determine_device() {
+zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_determine_device:${ZRAMDISK_COLOR_NC} Reached function zramdisk_determine_device" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+
+    # A: Device from config is present and valid → apply
+    if [[ -n "$zram_device" ]] && zramdisk_validate_device "$zram_device"; then
+        return 0   # It outputs nothing, value remains set.
+    else
+    # B: No valid device
+        local dev
+        for dev in {1..99}; do
+            [[ -e "/dev/zram${dev}" ]] && zram_devices+=("/dev/zram${dev}")
+        done
+#        zramdisk_select_existing_device
+    fi
+}
+
+zramdisk_validate_device() {
+zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_determine_device:${ZRAMDISK_COLOR_NC} Reached function zramdisk_validate_device" >&2
+    local dev="$1"
+    [[ "${dev}" =~ ^zram[1-9][0-9]*$ ]]
+}

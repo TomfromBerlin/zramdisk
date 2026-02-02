@@ -1,0 +1,131 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+# -----------------------------------------------------------------------#
+# zramdisk_prepare_mount                                                 #
+# Mount a zRAM device                                                    #
+# -----------------------------------------------------------------------#
+# Usage: zramdisk mount [device] (specifying a device is optional)       #
+# -----------------------------------------------------------------------#
+##########################################################################
+zramdisk_prepare_mount() {
+zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} Reached function zramdisk_prepare_mount" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+# Go through the arguments
+    while (( $# )); do
+        case "$1" in
+            /dev/zram*) zram_device=${1} ;;
+                     *) ;;
+                    "") ;;
+        esac
+        (( $# )) && shift
+    done
+    if [[ $device_is_mounted == true ]]; then break ; fi
+
+    # Load config if available
+    if [[ -z "${zram_device}" ]]; then
+    zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} Reached check if \$zram_device is empty" >&2
+        local -a title body footer
+        title=("${ZRAMDISK_COLOR_YELLOW}Select zRAM Device${ZRAMDISK_COLOR_NC}")
+        footer=("No selectable zRAM devices found. Exiting.")
+
+        zramdisk_print_box \
+            "${title[@]}" \
+            "${footer[@]}"
+            return 0
+    fi
+    if [[ -n "${zram_device}" ]] ; then
+        # 1. Determine & ensure mountpoint, create it if necessary (Config or Default)
+        zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} determine mountpoint" >&2
+        zramdisk_determine_mountpoint
+        zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} determine device" >&2
+        zramdisk_determine_device
+        # 2. Mount process
+        #zramdisk_create_disk
+        zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} perfom mount" >&2
+        zramdisk_perform_mount "$zram_device" "$zramdisk_dir"
+   elif [[ -n $(zramctl -o NAME -n | grep -q '^/dev/zram[1-9]') ]]; then
+        zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} find unmounted zram device" >&2
+        zramdisk_find_unmounted_zram || {
+        zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} select existing device" >&2
+        zramdisk_select_existing_device
+        # 1. Determine Compression Algorithm
+        zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} determine algorithm" >&2
+        zramdisk_comp_alg=$(zramctl "$zram_device" --raw --output ALGORITHM -n) || {
+        local -a title body footer
+        title=("${ZRAMDISK_COLOR_GREEN}No Compression Algorithm Defined")
+        body=("
+${ZRAMDISK_COLOR_CYAN}You should select an initialized device
+that does not have a mount point.
+Alternatively, you can select the menu item ${ZRAMDISK_COLOR_BLUE}Remove zRAM disk(s)${ZRAMDISK_COLOR_NC}
+and then run Setup again.
+Uninitialized devices will not work with ${ZRAMDISK_COLOR_BLUE}zramctl${ZRAMDISK_COLOR_NC}
+and should generally be removed before setup.
+")
+        footer=("Press any key to return to device selection...")
+        clear
+        zramdisk_print_box \
+        "${title}" \
+        "${body}" \
+        "${footer}"
+        read -sk1
+        zramdisk_select_existing_device
+        }
+        # 2. Determine size
+        zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} determine size" >&2
+        zramdisk_size=$(zramctl "$zram_device" --raw --output DISKSIZE -n) || {
+        local -a title body footer
+        title=("${ZRAMDISK_COLOR_GREEN}Disk Size Not Defined")
+        body=("
+${ZRAMDISK_COLOR_CYAN}You should select an initialized device
+that does not have a mount point.
+Alternatively, you can select the menu item ${ZRAMDISK_COLOR_BLUE}Remove zRAM disk(s)${ZRAMDISK_COLOR_NC}
+and then run Setup again.
+Uninitialized devices will not work with ${ZRAMDISK_COLOR_BLUE}zramctl${ZRAMDISK_COLOR_NC}
+and should generally be removed before setup.
+")
+        footer=("Press any key to return to device selection...")
+        clear
+        zramdisk_print_box \
+        "${title}" \
+        "${body}" \
+        "${footer}"
+        read -sk1
+        zramdisk_select_existing_device
+        }
+        # 3. Determine mountpoint (Config)
+        zramdisk_dir=$(zramdisk_determine_mountpoint)
+        # 4. Mount process
+        (( zramdisk_size )) && zramdisk_perform_mount "$zram_device" "$zramdisk_dir"
+        }
+    else
+        # 1. Determine device (Config → Validation → Interaction if necessary)
+        zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} determine device" >&2
+        zram_device=$(zramdisk_determine_device) || return 1
+        # 2. Determin mountpoint (Config or Default)
+        zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} Reached determine mount" >&2
+        zramdisk_dir=$(zramdisk_determine_mountpoint)
+        # 3. Mount process
+        zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} Reached create disk" >&2
+        zramdisk_create_disk
+        zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} Reached perfom mount" >&2
+        zramdisk_perform_mount "$zram_device" "$zramdisk_dir"
+    fi
+    zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} Reached end of function" >&2
+    return 0
+}
+#ZRAMDISK_SCRIPT

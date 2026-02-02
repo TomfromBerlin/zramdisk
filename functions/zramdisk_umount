@@ -1,0 +1,23 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_umount() {
+zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_unmount:${ZRAMDISK_COLOR_NC} Reached function zramdisk_unmount" >&2
+    emulate -L zsh
+    sudo umount -d -q "$zramdisk_dir" || print -P " ${ZRAMDISK_COLOR_CYAN}zramdisk_unmount:${ZRAMDISK_COLOR_NC} $zramdisk_dir is not a mount point."
+    return 0
+}
+#ZRAMDISK_SCRIPT
