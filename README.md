@@ -428,7 +428,7 @@ Usage: `zramdisk` followed by one of the arguments below
 | unload | unload plugin |
 | help | display this help |
 | error | display a list of possible errors and their cause |
-| trouble | {zramdisk_color_cyan}display some troubleshooting |
+| trouble | display some troubleshooting |
 ###
 |Note 1|
 |-|
@@ -498,10 +498,9 @@ zramdisk help
 | `ZRAMDISK_DIR` | `${HOME}/zramdisk` | Mount point |
 | `ZRAMDISK_DEBUG` | 0 | Debug mode: 0 = off, 1 = on |
 
-The configuration is written to the `zramdisk.conf` file in the plugin directory and contains additional information. It can be used as a template for later installations and is human-readable. You should only edit this file manually if you know what you're doing. If the file is corrupted or its contents are meaningless, simply delete it and run the setup again.
+The configuration is written to the `zramdisk.conf` file in the plugin directory and contains additional information. It is human-readable and can be edited manually if you know what you're doing. If the file is corrupted or its contents are meaningless, simply delete it and run the setup again.
 
 </details>
-
 
 ---
 
@@ -531,11 +530,11 @@ The configuration is written to the `zramdisk.conf` file in the plugin directory
 │             ├── zramdisk_diagnose
 │             ├── zramdisk_error_list → possible errors and their cause
 │             ├── zramdisk_find_unmounted_zram
-│             ├── zramdisk_mount → prepare to mount zRAM device
 │             ├── zramdisk_notify → notification if some nessecary tools are missing
 │             ├── zramdisk_notify_me → optional notification when plugin is loaded
 │             ├── zramdisk_perform_mount → mount zRAM device
 │             ├── zramdisk_plugin_unload
+│             ├── zramdisk_prepare_mount → prepare to mount zRAM device
 │             ├── zramdisk_remove → remove zRAM device
 │             ├── zramdisk_select_alg → select compression algorithm
 │             ├── zramdisk_select_existing_device
@@ -552,7 +551,8 @@ The configuration is written to the `zramdisk.conf` file in the plugin directory
 ╰── icons/─╮
            ╰── dialog-warn.png
 
-
 ```
+
+There may be some marker files such as `notification_p`, `notification_d` or `no_color` that affect user notification about the plugin status or the plugin's appearance (colors vs. no colors).
 
 </details>
