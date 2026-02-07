@@ -29,7 +29,7 @@ if ! is-at-least 5.5; then
     return 1
 fi
 
-if  ! command -v /bin/zramctl &>/dev/null && ! command -v /usr/bin/zramctl &>/dev/null ; then
+if  ! command -v /bin/zramctl &>/dev/null && ! command -v /usr/bin/zramctl &>/dev/null && ! command -v /usr/sbin/zramctl &>/dev/null ; then
     source "${ZRAMDISK_FUNC_DIR}/zramdisk_zramctl_missing" && zramdisk_zramctl_missing
     unfunction zramdisk_zramctl_missing # Cleanup
     source "${ZRAMDISK_FUNC_DIR}/zramdisk_plugin_unload" && zramdisk_plugin_unload
