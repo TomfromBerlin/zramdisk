@@ -16,7 +16,8 @@
 |-|
 |First and foremost, the following should be clarified: Although this plugin was created with the utmost care and thoroughly tested, there is always a residual risk of data loss. We are talking about a temporary drive on which data can be temporarily stored. "Temporary" means that if the system is shut down —intentionally or unintentionally— or fails due to a power outage, all data stored on this drive will be lost. Write-back (data backup to a hard drive) is not supported; other solutions are available for this.|
 |In the event of data loss, the provider of this plugin (me) cannot be held liable under any circumstances.|
-|This plugin does not work on Debian-based distributions because Debian has abandoned the Linux Standard Base. You can try running `lsb_release` and you will receive a message that no LSB modules are available. I haven't yet figured out how to determine the distribution on Debian-based distributions, but this is necessary for certain functions of the plugin.|
+|This plugin currently does not work on Debian-based distributions because Debian seems to have abandoned the Linux Standard Base (LSB). If you run `lsb_release`, you will receive a message stating that no LSB modules are available. I am working on determining the distribution for all systems, but this will take some time. Why is this necessary? There are different ways to handle character spacing. On some distributions, symbols and emojis have a width of two characters, while on others they have one. This information is required to render the borders correctly. |
+| ![zramdisk menu](screenshots/menu.png) |
 
 ## Introduction
 
