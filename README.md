@@ -16,8 +16,7 @@
 |-|
 |First and foremost, the following should be clarified: Although this plugin was created with the utmost care and thoroughly tested, there is always a residual risk of data loss. We are talking about a temporary drive on which data can be temporarily stored. "Temporary" means that if the system is shut down —intentionally or unintentionally— or fails due to a power outage, all data stored on this drive will be lost. Write-back (data backup to a hard drive) is not supported; other solutions are available for this.|
 |In the event of data loss, the provider of this plugin (me) cannot be held liable under any circumstances.|
-|This plugin currently does not work on Debian-based distributions because Debian seems to have abandoned the Linux Standard Base (LSB). If you run `lsb_release`, you will receive a message stating that no LSB modules are available. I am working on determining the distribution for all systems, but this will take some time. Why is this necessary? There are different ways to handle character spacing. On some distributions, symbols and emojis have a width of two characters, while on others they have one. This information is required to render the borders correctly. |
-| ![zramdisk menu](screenshots/menu.png) |
+|This plugin will not work on all distributions, e.g. Debian does not provide the nessecary tool `zramctl`. It works on CachyOS and LinuxMint. Other distributions have to be tested. |
 
 ## Introduction
 
