@@ -17,6 +17,7 @@
 |First and foremost, the following should be clarified: Although this plugin was created with the utmost care and thoroughly tested, there is always a residual risk of data loss. We are talking about a temporary drive on which data can be temporarily stored. "Temporary" means that if the system is shut down —intentionally or unintentionally— or fails due to a power outage, all data stored on this drive will be lost. Write-back (data backup to a hard drive) is not supported; other solutions are available for this.|
 |In the event of data loss, the provider of this plugin (me) cannot be held liable under any circumstances.|
 |This plugin will not work on all distributions, e.g. Debian does not provide the nessecary tool `zramctl`. It works on CachyOS and LinuxMint. Other distributions have to be tested. |
+|The padding doesn't work equally well in all terminals. For example, the plugin's menus look really ugly in the System67 terminal (on Pop!OS). I recommend using a different terminal, such as Gnome Terminal or Konsole. I'll test more terminals when I have the time.|
 
 ## Introduction
 
