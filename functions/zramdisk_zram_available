@@ -49,7 +49,7 @@ zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk:${ZRAMDISK_COLOR_NC} Reached scri
         # Save original ONLY if not already saved
         [[ -z "${ZRAMDISK_ORIGINAL_PS1}" ]] && ZRAMDISK_ORIGINAL_PS1="$PS1"
         # Prepend info box to PS1
-        PS1=$'╭────────────────────╮\n│ %F{blue}√%f %F{white}zramdisk loaded.%f │\n╰────────────────────╯\n'"$ZRAMDISK_ORIGINAL_PS1"
+        PS1=$'╭────────────────────╮\n│ √ zramdisk loaded. │\n╰────────────────────╯\n'"$ZRAMDISK_ORIGINAL_PS1"
     elif [[ -f "${ZRAMDISK_PLUGIN_DIR}"/zramdisk_notify_p && ! -f "${ZRAMDISK_PLUGIN_DIR}"/no_color ]] ; then
         # Save original ONLY if not already saved
         [[ -z "${ZRAMDISK_ORIGINAL_PS1}" ]] && ZRAMDISK_ORIGINAL_PS1="$PS1"

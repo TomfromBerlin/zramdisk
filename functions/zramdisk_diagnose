@@ -44,10 +44,11 @@ zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_diagnose:${ZRAMDISK_COLOR_NC} Re
     if lsmod | grep -q '^zram'; then
         print "The zRAM module has been loaded and is ${ZRAMDISK_COLOR_GREEN}available.${ZRAMDISK_COLOR_NC}"
         print "\n${ZRAMDISK_COLOR_YELLOW}[1.1] Kernel Log Entries${ZRAMDISK_COLOR_NC}"
-        sudo dmesg | GREP_COLORS='ms=1;1' grep --color=always -i zram | tail -n 20 || print "No kernel log entries for zRAM."
+        sudo dmesg | GREP_COLORS='ms=1;1' grep --color=always -i zram | command tail -n 20 || print "No kernel log entries for zRAM."
     else
-        print "zRAM module${ZRAMDISK_COLOR_RED}not${ZRAMDISK_COLOR_NC} loaded."
-        print "Unfortunately, with your current kernel configuration you cannot use zRAM devices at all."
+        print "zRAM module ${ZRAMDISK_COLOR_RED}not${ZRAMDISK_COLOR_NC} loaded."
+        print "Try ${ZRAMDISK_COLOR_BLUE}sudo modeprobe zram${ZRAMDISK_COLOR_NC}. If this doesn't work, unfortunately, with your"
+        print "current kernel configuration you cannot use zRAM devices at all."
         print "Consider switching to a kernel with zRAM support (must be enabled at compile time)."
     fi
 

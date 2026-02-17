@@ -60,14 +60,31 @@ zramdisk_normalize_wide_placeholder() {
     emulate -L zsh
     setopt LOCALOPTIONS
 # e_w = emoji_widths mapping (emoji → display width in 'O' chars)
+#local distrib_id
+#distrib_id="$(awk -F= '/^DISTRIB_ID/ {print $2}' /etc/lsb-release)"
+local distro
+distro=$(lsb_release -si)
+case "${distro}" in
+LinuxMint|Ubuntu)
 local -A e_w=(
     🟢 OO  🔴 OO  🟡 OO  🔵 OO
-    ⚙️ OO  ✅ OO  ℹ️ OO  ✔️ OO
+    ⚪ OO  ✅ OO  💲 OO  ✔️ OO
     ⚠️ OO  ❌ OO  🎉 OO  ⚡ OO
-    ⚫ 00  ⚪ 00  💲 OO
-    ❔ O   🫟 O   ‼️ O
-
+    ⚫ OO
+    ❔ O  🫟 O  ‼️ O  ℹ️ O  ⚙️ O
 )
+;;
+cachyos|Debian|Fedora)
+local -A e_w=(
+    🟢 OO  🔴 OO  🟡 OO  🔵 OO
+    ⚙️ OO  ✅ OO  💲 OO  ✔️ OO
+    ⚠️ OO  ❌ OO  🎉 OO  ⚡ OO
+    ⚫ OO  ⚪ OO  ℹ️ OO
+    ❔ O  🫟 O  ‼️ O
+)
+;;
+esac
+
 local em wi s="$1"
 for em wi in ${(kv)e_w}; do
     s=${s//$em/$wi}

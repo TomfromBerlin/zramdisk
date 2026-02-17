@@ -116,7 +116,8 @@ zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_diag:${ZRAMDISK_COLOR_NC} Reache
     if lsmod | grep -q '^zram'; then
         status_kernel="${ZRAMDISK_COLOR_GREEN}zram module loaded"
     else
-        status_kernel="zram module ${ZRAMDISK_COLOR_RED}not${ZRAMDISK_COLOR_NC} loaded"
+        status_kernel="zram module ${ZRAMDISK_COLOR_RED}not${ZRAMDISK_COLOR_NC} loaded
+                      Try ${ZRAMDISK_COLOR_BLUE} sudo modprobe zram${ZRAMDISK_COLOR_NC}"
     fi
 
     # ------------------------------------------------------
@@ -171,9 +172,10 @@ zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_diag:${ZRAMDISK_COLOR_NC} Reache
         [[ -w /sys/class/zram-control/hot_add ]] && hot_add_status="$(print -P "is ${ZRAMDISK_COLOR_GREEN}writable")" || \
         hot_add_status=$(print -P "is ${ZRAMDISK_COLOR_RED}not${ZRAMDISK_COLOR_NC} writable\n                      → elevated rights needed "; true)
     else
-        hot_add_present="${ZRAMDISK_COLOR_RED}not${ZRAMDISK_COLOR_NC} available"
+        hot_add_present="${ZRAMDISK_COLOR_RED}not${ZRAMDISK_COLOR_NC} available
+                      (zram module not loaded)"
         hot_add_exists=0
-        hot_add_status="$(print -P "${ZRAMDISK_COLOR_RED}hot_add not supported${ZRAMDISK_COLOR_RED}")"
+        hot_add_status="$(print -P "unknown")"
     fi
 
     # ------------------------------------------------------
@@ -206,10 +208,10 @@ ${init_lines[@]}
     footer=("${ZRAMDISK_COLOR_YELLOW}==== End of status & diagnostics ====")
 
     msg=(
-"Get more zRAM related information:
-${ZRAMDISK_COLOR_CYAN}systemd services${ZRAMDISK_COLOR_NC}      → ${ZRAMDISK_COLOR_BLUE}zramdisk diag --services${ZRAMDISK_COLOR_NC}
-${ZRAMDISK_COLOR_CYAN}kernel logs${ZRAMDISK_COLOR_NC}           → ${ZRAMDISK_COLOR_BLUE}zramdisk diag --dmsg${ZRAMDISK_COLOR_NC}
-${ZRAMDISK_COLOR_CYAN}verbose diagnostics${ZRAMDISK_COLOR_NC}   → ${ZRAMDISK_COLOR_BLUE}zramdisk diagnose${ZRAMDISK_COLOR_NC}"
+" Get more zRAM related information:
+${ZRAMDISK_COLOR_CYAN} systemd services${ZRAMDISK_COLOR_NC}      → ${ZRAMDISK_COLOR_BLUE}zramdisk diag --services${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} kernel logs${ZRAMDISK_COLOR_NC}           → ${ZRAMDISK_COLOR_BLUE}zramdisk diag --dmsg${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} verbose diagnostics${ZRAMDISK_COLOR_NC}   → ${ZRAMDISK_COLOR_BLUE}zramdisk diagnose${ZRAMDISK_COLOR_NC}"
     )
 
     clear

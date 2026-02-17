@@ -60,7 +60,7 @@ a new configuration will be created."
     read -sk input
     echo
     if [[ "$input" != [Yy] ]] ; then
-        rm -f "$config_file"
+        command rm -f "$config_file"
     fi
     zramdisk_create_disk
 }

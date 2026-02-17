@@ -15,20 +15,37 @@
 # TomfromBerlin 2025-2026                                                #
 ##########################################################################
 zramdisk_plugin_unload() {
-zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_plugin_unload:${ZRAMDISK_COLOR_NC} Reached function zramdisk_plugin_unload" >&2
+#    print "DEBUG: unload start" > /dev/tty
     emulate -L zsh
+
+#    print "DEBUG: checking commands" > /dev/tty
     local cmd
     if [[ -n "${zramdisk_commands:-}" ]]; then
         for cmd in ${(z)zramdisk_commands}; do
+            print "DEBUG: unalias $cmd" > /dev/tty
             unalias "$cmd" 2>/dev/null
         done
     fi
+
+#    print "DEBUG: fixing fpath" > /dev/tty
     fpath=("${(@)fpath:#${0:A:h}}")
+
+#    print "DEBUG: unfunctioning" > /dev/tty
     unfunction -m 'zramdisk_*' 2>/dev/null
+
+#    print "DEBUG: checking if cleanup exists" > /dev/tty
+    if ! typeset -f zramdisk_cleanup >/dev/null 2>&1; then
+        print "DEBUG: sourcing cleanup" > /dev/tty
+        source "${ZRAMDISK_FUNC_DIR}/zramdisk_cleanup" 2>/dev/null
+    fi
+
+#    print "DEBUG: calling cleanup" > /dev/tty
     zramdisk_cleanup
+#    print "DEBUG: after cleanup" > /dev/tty
+
     unset zramdisk_plugin_unload
     unset ZRAMDISK_LOADED
-    print -P '\n%F{blue} Zsh zRAMDisk Plugin%f unloaded successfully.'
+#    print -P '\n%F{blue} Zsh zRAMDisk Plugin%f unloaded successfully.' > /dev/tty
     return 0
 }
 

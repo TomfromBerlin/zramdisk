@@ -15,15 +15,16 @@
 # TomfromBerlin 2025-2026                                                #
 ##########################################################################
 zramdisk_cleanup() {
-local VARIABLES="_{comp_alg,size,dir,enabled,commands,device,kernel_logs,services,kernel,mdir,mp,debug,enabled,exists,status,present,exists,status,present,bytes,kb,ram, \
-gREEN_BOLD,GREEN,RED_BOLD,RED,YELLOW,BLUE_BOLD,BLUE,CYAN_BOLD,CYAN,MAGENTA_BOLD,MAGENTA,WHITE,WHITE_FLASH,GREY,NC,ITALIC}"
-unset title body footer msg zram_device cfg plugin_enabled num_devices init_lines i d algo size mp first dev dir input chosen_device default_percent default_gib min_bytes bytes _4_gib _1_gib _25perc \
-    total_{bytes,kb,ram} \
-    status_{kernel,mdir,mp} \
-    show_{kernel_logs,services} \
-    hot_add_{exists,status,present} \
-    zramdisk_{comp_alg,size,dir,plugin_dir,device,enabled,commands,debug} \
-    ZRAMDISK_COLOR_{GREEN_BOLD,GREEN,RED_BOLD,RED,YELLOW,BLUE_BOLD,BLUE,CYAN_BOLD,CYAN,MAGENTA_BOLD,MAGENTA,WHITE,WHITE_FLASH,GREY,NC,ITALIC}
-    #printf '\e[?1049l' # disable alternate buffer
+    {
+        unset title body footer msg zram_device cfg plugin_enabled num_devices init_lines i d algo size mp first dev dir input chosen_device default_percent default_gib min_bytes bytes _4_gib _1_gib _25perc \
+            total_bytes total_kb total_ram \
+            status_kernel status_mdir status_mp \
+            show_kernel_logs show_services \
+            hot_add_exists hot_add_status hot_add_present \
+            zramdisk_comp_alg zramdisk_size zramdisk_dir zramdisk_plugin_dir zramdisk_device zramdisk_enabled zramdisk_commands zramdisk_debug \
+            ZRAMDISK_COLOR_GREEN_BOLD ZRAMDISK_COLOR_GREEN ZRAMDISK_COLOR_RED_BOLD ZRAMDISK_COLOR_RED ZRAMDISK_COLOR_YELLOW ZRAMDISK_COLOR_BLUE_BOLD ZRAMDISK_COLOR_BLUE ZRAMDISK_COLOR_CYAN_BOLD ZRAMDISK_COLOR_CYAN ZRAMDISK_COLOR_MAGENTA_BOLD ZRAMDISK_COLOR_MAGENTA ZRAMDISK_COLOR_WHITE ZRAMDISK_COLOR_WHITE_FLASH ZRAMDISK_COLOR_GREY ZRAMDISK_COLOR_NC ZRAMDISK_COLOR_ITALIC
+    } 2>/dev/null
+
     return 0
 }
+
