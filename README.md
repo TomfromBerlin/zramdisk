@@ -10,6 +10,7 @@
   <img src="https://img.shields.io/badge/license-MIT-green?style=plastic">
   <img src="https://img.shields.io/github/stars/TomfromBerlin/zramdisk?style=plastic">
   <img src="https://img.shields.io/github/downloads/TomfromBerlin/zramdisk/total?style=plastic&labelColor=grey&color=blue">
+  <img alt="GitHub Created At" src="https://img.shields.io/github/created-at/TomfromBerlin/zramdisk">
 
 </p>
 
