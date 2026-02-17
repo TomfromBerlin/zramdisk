@@ -15,7 +15,7 @@
 # TomfromBerlin 2025-2026                                                #
 ##########################################################################
 emulate -L zsh
-setopt LOCALOPTIONS EXTENDED_GLOB TYPESET_SILENT RC_QUOTES WARN_NESTED_VAR
+setopt LOCALOPTIONS EXTENDED_GLOB TYPESET_SILENT RC_QUOTES
 typeset -gA Plugins
 Plugins[ZRAMDISK]="${0:h}"
 typeset -g ZRAMDISK_PLUGIN_DIR="${0:A:h}"
@@ -24,32 +24,53 @@ typeset -g ZRAMDISK_FUNC_DIR="${ZRAMDISK_PLUGIN_DIR}/functions"
 autoload -Uz is-at-least
 if ! is-at-least 5.5; then
     source "${ZRAMDISK_FUNC_DIR}/zramdisk_wrong_zsh_version" && zramdisk_wrong_zsh_version
-    unfunction zramdisk_wrong_zsh_version  # Cleanup
     source "${ZRAMDISK_FUNC_DIR}/zramdisk_plugin_unload" && zramdisk_plugin_unload
     return 1
 fi
 
-if  ! command -v /bin/zramctl &>/dev/null && ! command -v /usr/bin/zramctl &>/dev/null && ! command -v /usr/sbin/zramctl &>/dev/null ; then
+local distro
+if [[ -f /etc/os-release ]] ; then
+    distro="$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr '[:upper:]' '[:lower:]')"
+
+# Fallback lsb_release
+elif [[ -z "${distro}" ]] && command -v lsb_release &>/dev/null ; then
+    distro="$(lsb_release -si 2>/dev/null | tr '[:upper:]' '[:lower:]')"
+fi
+if [[  "${distro}" == Debian || "${distro}" == debian ]] ; then
+    print -P '\n%F{red}╭─────────────────────────────────────────╮%f' > /dev/tty
+    print -P '%F{red}│%f ⚠️ zramdisk: Not compatible with Debian %F{red}│%f' > /dev/tty
+    print -P '%F{red}│%f %F{blue}zramctl%f not available - Plugin disabled %F{red}│%f' > /dev/tty
+    print -P '%F{red}╰─────────────────────────────────────────╯%f\n' > /dev/tty
+    unset distro
+   {
+        [[ -f "${ZRAMDISK_FUNC_DIR}/zramdisk_cleanup" ]] && source "${ZRAMDISK_FUNC_DIR}/zramdisk_cleanup"
+        source "${ZRAMDISK_FUNC_DIR}/zramdisk_plugin_unload" && zramdisk_plugin_unload
+    } 2>/dev/null 3>&2 2>&3 | cat > /dev/null  # Triple-redirect Voodoo
+
+    return 1
+fi
+
+if  ! command -v zramctl &>/dev/null ; then
     source "${ZRAMDISK_FUNC_DIR}/zramdisk_zramctl_missing" && zramdisk_zramctl_missing
-    unfunction zramdisk_zramctl_missing # Cleanup
+    unfunction -m zramdisk_zramctl_missing # Cleanup
     source "${ZRAMDISK_FUNC_DIR}/zramdisk_plugin_unload" && zramdisk_plugin_unload
     return 1
-elif
-    [[ -f "${ZRAMDISK_FUNC_DIR}/zramdisk_zram_available" ]]; then
-    source "${ZRAMDISK_FUNC_DIR}/zramdisk_zram_available" && zramdisk_zram_available
+else
+    [[ -f "${ZRAMDISK_FUNC_DIR}/zramdisk_zram_available" ]] && source "${ZRAMDISK_FUNC_DIR}/zramdisk_zram_available" && zramdisk_zram_available
 fi
+
 # Check for other required tools
 local -a missing_tools=()
-local tool
-for tool in awk grep mount umount sed sudo; do
-    if ! command -v "${tool}" &>/dev/null; then
-        missing_tools+=("${tool}")
+local tools
+for tools in awk date gdbus grep lsmod mkfs.ext4 mount umount rm sed sleep sudo touch tput ; do
+    if ! command -v "${tools}" &>/dev/null; then
+        missing_tools+=("${tools}")
     fi
 done
 
 if (( ${#missing_tools[@]} > 0 )); then
     print -P "%F{red}Error: Missing required tools: ${missing_tools[*]}%f"
-    unset missing_tools tool
+    unset missing_tools tools
     source "${ZRAMDISK_FUNC_DIR}/zramdisk_plugin_unload" && zramdisk_plugin_unload
     return 1
 fi
@@ -59,8 +80,7 @@ TRAPWINCH() {
 }
 
 typeset -g ZRAMDISK_LOADED=1
-# printf '\e[?1049h' # enable alternate buffer
-# trap cleanup EXIT
+
 # Defaults
 # ────────────────────────────────────────────────────────────────
 : ${zramdisk_size:=$(awk '/^MemTotal:/ {print $2/1024/1024/2}' /proc/meminfo)GiB}
@@ -215,7 +235,7 @@ zramdisk_zramctl_missing() {
 
 # ────────────────────────────────────────────────────────────────
 # Typewriter effect - just for fun
-# Usage tpwrtr <"Text string in double quotes!"> <delay in sec>
+# Usage tpwrtr "Text string in double quotes!" <delay in sec>
 # delay = how fast the text string will be written and deleted
 # ────────────────────────────────────────────────────────────────
 tpwrtr() {
@@ -281,9 +301,7 @@ footer=(
 Press any key..."
 )
 zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC} Reached msg." >&2
-msg=(
-
-)
+# msg=()
 zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC} Reached zramdisk_print_box." >&2
 
     zramdisk_print_box \
@@ -314,6 +332,14 @@ zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC
     elif
         [[ "${zramdisk_debug}" = 0  && ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
         status_debug="🔴"
+    fi
+    
+    if lsmod | grep -q '^zram'; then
+        status_kernel="${ZRAMDISK_COLOR_GREEN}zram module loaded${ZRAMDISK_COLOR_NC}"
+        menu_options="${ZRAMDISK_COLOR_YELLOW}Create / Setup zRAM${ZRAMDISK_COLOR_NC}"
+    else
+        status_kernel="zram kernel module ${ZRAMDISK_COLOR_RED}not${ZRAMDISK_COLOR_NC} loaded - press${ZRAMDISK_COLOR_BLUE} 1 ${ZRAMDISK_COLOR_NC} to load it"
+        menu_options="${ZRAMDISK_COLOR_YELLOW}Load zram kernel module ${ZRAMDISK_COLOR_NC}with ${ZRAMDISK_COLOR_BLUE}sudo modprobe zram ${ZRAMDISK_COLOR_NC}"
     fi
 
     if [[ ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]]; then
@@ -355,7 +381,7 @@ title=(
 )
 
 body=("
-${ZRAMDISK_COLOR_CYAN} 1) ${ZRAMDISK_COLOR_YELLOW}Create / Setup zRAM${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} 1) ${menu_options}
 ${ZRAMDISK_COLOR_CYAN} 2) ${ZRAMDISK_COLOR_YELLOW}Remove zRAM disk(s)${ZRAMDISK_COLOR_NC}
 ${ZRAMDISK_COLOR_CYAN} 3) ${ZRAMDISK_COLOR_YELLOW}Mount zRAM device${ZRAMDISK_COLOR_NC}
 ${ZRAMDISK_COLOR_CYAN} 4) ${ZRAMDISK_COLOR_YELLOW}Unmount zRAM device${ZRAMDISK_COLOR_NC}
@@ -371,7 +397,8 @@ ${ZRAMDISK_COLOR_CYAN} n) ${ZRAMDISK_COLOR_YELLOW}Notification settings ${ZRAMDI
 "
 )
 
-footer=("${ZRAMDISK_COLOR_GREEN}Info: ${ZRAMDISK_COLOR_YELLOW} [zramdisk]${ZRAMDISK_COLOR_NC} Plugin loaded: ${plugin_enabled}${ZRAMDISK_COLOR_NC}")
+footer=("${ZRAMDISK_COLOR_GREEN}Info: ${ZRAMDISK_COLOR_YELLOW} [zramdisk]${ZRAMDISK_COLOR_NC} Plugin loaded: ${plugin_enabled}${ZRAMDISK_COLOR_NC}
+${status_kernel}")
 
 msg=(
 "${ZRAMDISK_COLOR_NC}Select an option [0-8] or [d], [n], [c]${ZRAMDISK_COLOR_NC}"
@@ -385,7 +412,14 @@ zramdisk_print_box \
 
     read -sk choice
     case "$choice" in
-        1) clear && zramdisk_setup ;;
+        1) if lsmod | grep -q '^zram'; then
+              clear && zramdisk_setup
+           else
+               sudo modprobe zram
+               clear
+               zramdisk_menu
+           fi
+           ;;
         2) clear && zramdisk_remove ;;
         3) clear && zramdisk_prepare_mount ;;
         4) clear && zramdisk_umount ;;
@@ -407,6 +441,7 @@ zramdisk_print_box \
             fi
             ;;
         n) clear && zramdisk_notify_me ;;
+
         *) clear && tpwrtr "Invalid choice. Menu closed." .02 && return 0 ;;
 
     esac
