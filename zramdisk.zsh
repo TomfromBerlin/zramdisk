@@ -20,6 +20,7 @@ typeset -gA Plugins
 Plugins[ZRAMDISK]="${0:h}"
 typeset -g ZRAMDISK_PLUGIN_DIR="${0:A:h}"
 typeset -g ZRAMDISK_FUNC_DIR="${ZRAMDISK_PLUGIN_DIR}/functions"
+[[ -z $GIO_EXTRA_MODULES ]] && export GIO_EXTRA_MODULES=/usr/lib/x86_64-linux-gnu/gio/modules/
 
 autoload -Uz is-at-least
 if ! is-at-least 5.5; then
@@ -36,6 +37,7 @@ if [[ -f /etc/os-release ]] ; then
 elif [[ -z "${distro}" ]] && command -v lsb_release &>/dev/null ; then
     distro="$(lsb_release -si 2>/dev/null | tr '[:upper:]' '[:lower:]')"
 fi
+
 if [[  "${distro}" == Debian || "${distro}" == debian ]] ; then
     print -P '\n%F{red}╭─────────────────────────────────────────╮%f' > /dev/tty
     print -P '%F{red}│%f ⚠️ zramdisk: Not compatible with Debian %F{red}│%f' > /dev/tty
@@ -48,6 +50,25 @@ if [[  "${distro}" == Debian || "${distro}" == debian ]] ; then
     } 2>/dev/null 3>&2 2>&3 | cat > /dev/null  # Triple-redirect Voodoo
 
     return 1
+fi
+
+local emoji_font_paths=(
+    /usr/share/fonts/noto-emoji/NotoColorEmoji.ttf
+    /usr/share/fonts/noto/NotoColorEmoji.ttf
+    /usr/share/fonts/google-noto-emoji-fonts
+    /usr/share/fonts/truetype/noto/NotoColorEmoji.ttf
+)
+
+local found=0
+for emoji_font in $emoji_font_paths; do
+    if [[ -e $emoji_font ]]; then
+        found=1
+        break
+    fi
+done
+
+if (( ! found )); then
+    source "${ZRAMDISK_FUNC_DIR}/zramdisk_font_missing" && zramdisk_font_missing
 fi
 
 if  ! command -v zramctl &>/dev/null ; then
