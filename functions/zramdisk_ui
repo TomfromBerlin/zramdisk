@@ -65,7 +65,7 @@ zramdisk_normalize_wide_placeholder() {
 local distro
 distro=$(lsb_release -si)
 case "${distro}" in
-LinuxMint|Ubuntu)
+*mint|LinuxMint|*Ubuntu|\"void\"|VoidLinux|voidlinux)
 local -A e_w=(
     🟢 OO  🔴 OO  🟡 OO  🔵 OO
     ⚪ OO  ✅ OO  💲 OO  ✔️ OO
