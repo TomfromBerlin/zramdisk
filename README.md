@@ -1,20 +1,15 @@
 <p align="center">
   <img src="https://img.shields.io/badge/zramdisk-blue?style=plastic&label=Zsh%20Plugin">
   <img src="https://img.shields.io/badge/Zsh-Version_%3E5.4.2-blue%3Fstyle%3Dplastic?style=plastic&labelColor=grey&color=blue">
-  <img src="https://img.shields.io/badge/Linux-blue?style=plastic&logo=linux&logoColor=black&logoSize=auto&label=Plattform&labelColor=blue&color=grey
-">
+  <img src="https://img.shields.io/badge/Linux-blue?style=plastic&logo=linux&logoColor=black&logoSize=auto&label=Plattform&labelColor=blue&color=grey">
   <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/TomfromBerlin/zramdisk">
   <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/w/TomfromBerlin/zramdisk">
-  <img src="https://img.shields.io/badge/Version%20%E2%89%A53.1.4-blue?style=plastic&logo=linux&logoColor=black&logoSize=auto&label=Kernel&labelColor=blue&color=grey
-">
+  <img src="https://img.shields.io/badge/Version%20%E2%89%A53.1.4-blue?style=plastic&logo=linux&logoColor=black&logoSize=auto&label=Kernel&labelColor=blue&color=grey">
   <img src="https://img.shields.io/badge/license-MIT-green?style=plastic&labelColor=grey&color=blue">
-  <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/TomfromBerlin/zramdisk?style=plastic&labelColor=grey&color=blue">
-
-  <img src="https://img.shields.io/github/downloads/TomfromBerlin/zramdisk/total?style=plastic&labelColor=grey&color=blue">
-  <img alt="GitHub Created At" src="https://img.shields.io/github/created-at/TomfromBerlin/zramdisk?style=plastic&labelColor=grey&color=blue">
   <img alt="GitHub contributors" src="https://img.shields.io/github/contributors-anon/TomfromBerlin/zramdisk?style=plastic&labelColor=grey&color=blue">
-
-
+  <img alt="GitHub top language" src="https://img.shields.io/github/languages/top/TomfromBerlin/zramdisk">
+  <img alt="GitHub repo file or directory count" src="https://img.shields.io/github/directory-file-count/TomfromBerlin/zramdisk?type=file&labelColor=blue&color=grey">
+  <img alt="GitHub repo file or directory count" src="https://img.shields.io/github/directory-file-count/TomfromBerlin/zramdisk%2Ffunctions?type=file&label=files%20in%20%2Ffunctions&labelColor=blue&color=grey">
 </p>
 
 # zramdisk
