@@ -7,10 +7,13 @@
   <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/w/TomfromBerlin/zramdisk">
   <img src="https://img.shields.io/badge/Version%20%E2%89%A53.1.4-blue?style=plastic&logo=linux&logoColor=black&logoSize=auto&label=Kernel&labelColor=blue&color=grey
 ">
-  <img src="https://img.shields.io/badge/license-MIT-green?style=plastic">
-  <img src="https://img.shields.io/github/stars/TomfromBerlin/zramdisk?style=plastic">
+  <img src="https://img.shields.io/badge/license-MIT-green?style=plastic&labelColor=grey&color=blue">
+  <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/TomfromBerlin/zramdisk?style=plastic&labelColor=grey&color=blue">
+
   <img src="https://img.shields.io/github/downloads/TomfromBerlin/zramdisk/total?style=plastic&labelColor=grey&color=blue">
-  <img alt="GitHub Created At" src="https://img.shields.io/github/created-at/TomfromBerlin/zramdisk">
+  <img alt="GitHub Created At" src="https://img.shields.io/github/created-at/TomfromBerlin/zramdisk?style=plastic&labelColor=grey&color=blue">
+  <img alt="GitHub contributors" src="https://img.shields.io/github/contributors-anon/TomfromBerlin/zramdisk?style=plastic&labelColor=grey&color=blue">
+
 
 </p>
 
