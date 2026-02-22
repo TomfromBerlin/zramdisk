@@ -19,11 +19,13 @@ zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_create:${ZRAMDISK_COLOR_NC} Reac
     emulate -L zsh
     setopt LOCALOPTIONS
 
+    zramdisk_default_values
+
     # Determine size
-    zramdisk_size || {
+    zramdisk_size_func || {
         local -a title msg
         title=("Exitcode: ${ZRAMDISK_COLOR_RED}${?}${ZRAMDISK_COLOR_NC}")
-        msg=("${ZRAMDISK_COLOR_RED}zramdisk_create:${ZRAMDISK_COLOR_NC} zramdisk_size FAILED!")
+        msg=("${ZRAMDISK_COLOR_RED}zramdisk_create:${ZRAMDISK_COLOR_NC} zramdisk_size_func FAILED!")
         zramdisk_print_box \
             "${title[@]}" \
             "" \
@@ -34,13 +36,12 @@ zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_create:${ZRAMDISK_COLOR_NC} Reac
     }
     # select algorithm (if it hasn't been set up yet)
     # set standard algorithms for compression
-    : "${zramdisk_comp_alg:=zstd}"
     zramdisk_select_alg || {
         local -a title footer msg
         title=("Exitcode: ${ZRAMDISK_COLOR_RED}${?}${ZRAMDISK_COLOR_NC}")
         footer=("${ZRAMDISK_COLOR_RED}zramdisk_create:${ZRAMDISK_COLOR_NC} zramdisk_select_alg FAILED!")
         msg=("Using standard algorithm → ${ZRAMDISK_COLOR_BLUE}${zramdisk_comp_alg}${ZRAMDISK_COLOR_NC}.")
-        clear
+
         zramdisk_print_box \
             "${title[@]}" \
             "" \
