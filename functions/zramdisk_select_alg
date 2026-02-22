@@ -22,6 +22,7 @@ zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_select_alg:${ZRAMDISK_COLOR_NC} R
     # Quote from https://github.com/ohmyzsh/wiki/blob/main/Settings.md#disable_magic_functions
     # "'bracketed-paste-magic' and 'url-quote-magic' are two Zsh utilities that are known buggy in some Zsh versions or user setups."
     [[ -z "${DISABLE_MAGIC_FUNCTIONS}" ]] && local DISABLE_MAGIC_FUNCTIONS="true"
+    : "${zramdisk_comp_alg:=zstd}"
 
     local -a title body msg
     title=("zRAM Disk Compression Algorithm")
@@ -36,7 +37,7 @@ ${ZRAMDISK_COLOR_CYAN} 6) ${ZRAMDISK_COLOR_YELLOW} show benchmark results
 "
     )
     msg=("Select an option [1-6]")
-    clear
+
     zramdisk_print_box \
         "${title[@]}" \
         "${body[@]}" \
@@ -62,7 +63,7 @@ ${ZRAMDISK_COLOR_CYAN} 6) ${ZRAMDISK_COLOR_YELLOW} show benchmark results
 "Unknown input. Using default algorithm → zstd.
 Press any key to continue..."
         )
-        clear
+
         zramdisk_print_box \
             "${title[@]}" \
             "" \
