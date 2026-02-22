@@ -97,16 +97,16 @@ zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_diag:${ZRAMDISK_COLOR_NC} Reache
     # Check default mount directory
     [[ -n "${zramdisk_dir}" ]] && status_mdir="${ZRAMDISK_COLOR_BLUE} ${zramdisk_dir}${ZRAMDISK_COLOR_NC}" || status_mdir=" ${ZRAMDISK_COLOR_GREY}n/a${ZRAMDISK_COLOR_NC}"
     # Check if mount directory is mounted
-    if mountpoint -q ${HOME}/zramdisk && [[ ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+    if mountpoint -q "${zramdisk_dir}" && [[ ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
         status_mp="🟢"
     elif
-        mountpoint -q ${HOME}/zramdisk  && [[ -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]]  ; then
+        mountpoint -q "${zramdisk_dir}"  && [[ -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]]  ; then
         status_mp="⚪"
     elif
-        ! mountpoint -q ${HOME}/zramdisk && [[ ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]]  ; then
+        ! mountpoint -q "${zramdisk_dir}" && [[ ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]]  ; then
         status_mp="🔴"
     elif
-        ! mountpoint -q ${HOME}/zramdisk && [[ -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]]  ; then
+        ! mountpoint -q "${zramdisk_dir}" && [[ -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]]  ; then
         status_mp="⚫"
     fi
 
@@ -141,12 +141,11 @@ zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_diag:${ZRAMDISK_COLOR_NC} Reache
         d=$(basename "$dev")
         algo="$(zramctl ${dev[@]} -o ALGORITHM -n)"
         size="$(zramctl ${dev[@]} -o DISKSIZE -n)"
-        if [[ ${dev} == /dev/zram0 ]]; then
-            mp="$(zramctl ${dev[@]} -o MOUNTPOINT -n)" #this is not reliable and only usefull for swap devices
-        elif
-            # Let's have a fallback with check of /proc/self/mountinfo
-            [[ -z "${mp[@]}" || "${mp[@]}" == "-" || "${mp[@]}" == "[SWAP]" ]]; then
-            mp=$(cat /proc/self/mountinfo | grep /dev/loop | awk '{print $5}')
+        mp=
+        if [[ -z "${mp[@]}" || "${mp[@]}" == "-" || "${mp[@]}" == "[SWAP]" ]]; then
+            mp="$(zramctl ${dev[@]} -o MOUNTPOINT -n)"
+        else
+            mp+=$(printf '%s' "$(cat /proc/self/mountinfo | grep "${dev}" | awk '{print $5}')")
         fi
         if [[ -e "/sys/block/$d/initstate" ]]; then
             st=$(<"/sys/block/$d/initstate")
@@ -178,6 +177,12 @@ zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_diag:${ZRAMDISK_COLOR_NC} Reache
         hot_add_status="$(print -P "unknown")"
     fi
 
+    # check symbolic link
+#    if [[ -f "$HOME/zramdisk" ]]; then
+    if readlink -e "$HOME/zramdisk" >/dev/null ; then
+        local symlink="${ZRAMDISK_COLOR_CYAN}with symlink:${ZRAMDISK_COLOR_BLUE}  $HOME/zramdisk${ZRAMDISK_COLOR_NC}"
+    fi
+
     # ------------------------------------------------------
     # 6) Output
     # ------------------------------------------------------
@@ -200,6 +205,7 @@ ${ZRAMDISK_COLOR_CYAN}Kernel Log:${ZRAMDISK_COLOR_NC}           $(sudo dmesg | g
 
 ${ZRAMDISK_COLOR_CYAN}Default mount point: ${status_mdir}
              ${ZRAMDISK_COLOR_CYAN}in use:  ${status_mp}
+       ${symlink}
 
 ${ZRAMDISK_COLOR_CYAN}Device(s):
 ${init_lines[@]}
@@ -214,7 +220,7 @@ ${ZRAMDISK_COLOR_CYAN} kernel logs${ZRAMDISK_COLOR_NC}           → ${ZRAMDISK_
 ${ZRAMDISK_COLOR_CYAN} verbose diagnostics${ZRAMDISK_COLOR_NC}   → ${ZRAMDISK_COLOR_BLUE}zramdisk diagnose${ZRAMDISK_COLOR_NC}"
     )
 
-    clear
+
     zramdisk_print_box \
     "$title" \
     "$body" \
