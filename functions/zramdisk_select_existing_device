@@ -23,7 +23,7 @@ zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_select_existing_device:${ZRAMDISK
     local dev
     typeset -g d algo size mp
     local -a zram_devices=() init_lines=()
-    clear
+
     # First, some cosmetic work as visual feedback that something is happening.
     local i
     i=99
@@ -74,7 +74,7 @@ zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_select_existing_device:${ZRAMDISK
         title=("${ZRAMDISK_COLOR_YELLOW}Select zRAM Device${ZRAMDISK_COLOR_NC}")
         footer=("No seltectable zRAM devices found. Exiting.")
 
-        clear
+
         zramdisk_print_box \
             "${title[@]}" \
             "${footer[@]}"
@@ -96,7 +96,7 @@ ${init_lines[@]}"
         "Select a device to be mounted..."
     )
 
-    clear
+
     zramdisk_print_box \
         "${title[@]}" \
         "${body[@]}" \
@@ -109,7 +109,7 @@ ${init_lines[@]}"
     PS3="${ZRAMDISK_COLOR_YELLOW}Your choice (number): ${ZRAMDISK_COLOR_NC}"
     select chosen_device in "${zram_devices[@]}" "Cancel"; do
         if [[ "$chosen_device" == "Cancel" ]]; then
-            clear
+
             tpwrtr "${ZRAMDISK_COLOR_CYAN}Operation cancelled by user request.${ZRAMDISK_COLOR_NC}"
             return 0
         elif [[ -n "$chosen_device" ]]; then
