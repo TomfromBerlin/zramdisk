@@ -12,6 +12,17 @@
 
 # zramdisk
 
+## ✨ Features
+
+- 🎛️ **Easy handling** - guided installation and operation
+- 🧩 **Modular structure** - therefore the plugin has **very low overhead** (the required code is only loaded when needed)
+- 🤖 **No hassle with systemctl** - no daemon necessary
+- 💾 **Display of useful information** - initialization status, used compression algorithm, mountpoint and more
+- 📦 **Plugin Manager Ready** - works with Zsh Unplugged ,oh-my-zsh, zinit, antigen, etc. (should work with every zsh plugin manager that follows the Zsh Plugin Standard)
+- ✅ **Zsh Plugin Standard compliant**
+
+---
+
 |Disclaimer:|
 |-|
 |First and foremost, the following should be clarified: Although this plugin was created with the utmost care and thoroughly tested, there is always a residual risk of data loss. We are talking about a temporary drive on which data can be temporarily stored. "Temporary" means that if the system is shut down —intentionally or unintentionally— or fails due to a power outage, all data stored on this drive will be lost. Write-back (data backup to a hard drive) is not supported; other solutions are available for this.|
@@ -92,16 +103,6 @@ For installation with a plugin manager or framework of your choice, see the 🛠
 
 ---
 
-## ✨ Features
-
-- 🎛️ **Easy handling** - guided installation and operation
-- 🧩 **Modular structure** - therefore the plugin has **very low overhead** (the required code is only loaded when needed)
-- 🤖 **No hassle with systemctl** - no daemon necessary
-- 💾 **Display of useful information** - initialization status, used compression algorithm, mountpoint and more
-- 📦 **Plugin Manager Ready** - works with Zsh Unplugged ,oh-my-zsh, zinit, antigen, etc. (should work with every zsh plugin manager that follows the Zsh Plugin Standard)
-- ✅ **Zsh Plugin Standard compliant**
-
----
 ## General Information
 
 zRAM itself consumes memory in any case; according to the man page, even without a RAM disk installed, it uses a small amount of the installed RAM.
@@ -433,11 +434,11 @@ Usage: `zramdisk` followed by one of the arguments below
 ###
 |Note 1|
 |-|
-| _Without an argument, the plugin only displays a message indicating that it is loaded and the list of available arguments. Then exits to the command prompt. The menu is **not** opened automatically every time the shell is started. This would be annoying._ |
+| _If the plugin is called without arguments (`% zramdisk`), it simply displays a message indicating that it has loaded, along with a list of available arguments. The menu is then displayed. The menu does **not** open automatically every time the shell starts. Although this would be inconvenient, you can enable a notification (above the prompt or as a desktop notification) to remind you that zramdisk is active and ready for use.._ |
 ###
 |Note 2|
 |-|
-| Occasionally (when multiple zRAM devices with an ID > 0 are present),  to remove all devices the removing process may have to be performed multiple times (either with the command zramdsik remove or via the menu). It should remove all devices from `1..99`, but it cannot be guaranteed. |
+| Occasionally (when multiple zRAM devices with an ID > 0 are present),  to remove all devices the removing process may have to be performed multiple times. I recommend using the zramdisk menu. Be carefull with `zramctl reset <device>`, because you might remove devices by accident, e.g., if you're in a docker environment. |
 
 </details>
 
