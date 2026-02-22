@@ -1,0 +1,34 @@
+zramdisk_default_values() {
+# Defaults
+# ────────────────────────────────────────────────────────────────
+: ${zramdisk_size:=$(printf '%.2f%s' "$RAM / 4" "G")}
+: ${zramdisk_comp_alg:=zstd}
+: ${zramdisk_dir:="$XDG_RUNTIME_DIR/zramdisk"}
+: ${zramdisk_debug:=0}
+
+        local -a title body footer
+        local choice
+        title=(${ZRAMDISK_COLOR_YELLOW}"Loading default values?${ZRAMDISK_COLOR_NC}")
+        body=(
+"Default values are:
+    $size
+    zRAM disk size = ${ZRAMDISK_COLOR_BLUE}${zramdisk_size}${ZRAMDISK_COLOR_NC}
+    zRAM comp algorithm = ${ZRAMDISK_COLOR_BLUE}${zramdisk_comp_alg}${ZRAMDISK_COLOR_NC}
+
+    ${ZRAMDISK_COLOR_GREY}cannot be changed:${ZRAMDISK_COLOR_NC}
+    Mount directory = ${ZRAMDISK_COLOR_BLUE}${zramdisk_dir}${ZRAMDISK_COLOR_NC}
+    Symlink to mount directory = ${ZRAMDISK_COLOR_BLUE}$HOME/zramdisk${ZRAMDISK_COLOR_NC}
+        ")
+        footer=("Select [${ZRAMDISK_COLOR_YELLOW}y${ZRAMDISK_COLOR_NC}]es to use the defaults or [${ZRAMDISK_COLOR_YELLOW}n${ZRAMDISK_COLOR_NC}]o to enter new values.")
+        zramdisk_print_box \
+            "${title[@]}" \
+            "${body[@]}" \
+            "${footer[@]}" \
+            "" \
+            ""
+        read -sk choice
+        case "$choice" in
+            y|Y) ;;
+            n|N) unset zramdisk_comp_alg algo zramdisk_size size ;;
+        esac
+}
