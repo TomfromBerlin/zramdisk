@@ -25,7 +25,7 @@ zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_perform_mount:${ZRAMDISK_COLOR_NC
     if [[ -z "$fs_type" ]]; then
     zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_perform_mount:${ZRAMDISK_COLOR_NC} Reached make file system" >&2
         print -P " ${ZRAMDISK_COLOR_CYAN}zramdisk:${ZRAMDISK_COLOR_NC} No filesystem found, creating ext4 → ${zram_device}" >&2
-        sudo mkfs.ext4 -q -L ZRAMDRIVE -m 0 "${zram_device}" "${zramdisk_size}" || {
+        sudo mkfs.ext2 -q -L ZRAMDRIVE -m 0 "${zram_device}" || {
             print -P "${ZRAMDISK_COLOR_RED}mkfs.ext4 FAILED!${ZRAMDISK_COLOR_NC} Exitcode: ${ZRAMDISK_COLOR_RED}${?}${ZRAMDISK_COLOR_NC}"
             return 1
         }
@@ -36,28 +36,47 @@ zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_perform_mount:${ZRAMDISK_COLOR_NC
     # Create a mount point and mount the zRAM device.
     if ! [[ -d "${zramdisk_dir}" ]]; then
         print -P " ${ZRAMDISK_COLOR_CYAN}zramdisk:${ZRAMDISK_COLOR_NC} No mountpoint found, creating mountpoint" >&2
-        typeset -g zramdisk_dir="${HOME}/zramdisk"
+        typeset -g zramdisk_dir="/run/zramdisk"
         zramdisk_determine_mountpoint || {
             print -P " Creation of mountpoint ${ZRAMDISK_COLOR_RED}failed${ZRAMDISK_COLOR_NC}.\n Make sure you have write access. Exitcode: ${ZRAMDISK_COLOR_RED}${?}${ZRAMDISK_COLOR_NC}"
             return 1
         }
     fi
     [[ -z "${dev}" ]] && dev="${zram_device}"
-    [[ -z "${dir}" ]] && dir="${zramdisk_dir:-$HOME/zramdisk}"
+    [[ -z "${dir}" ]] && dir="${zramdisk_dir}"
     if [[ $(cat /proc/self/mountinfo | grep "${dir}" | awk '{print $5}') ]] 2>/dev/null; then
         echo "${ZRAMDISK_COLOR_RED}Error${ZRAMDISK_COLOR_NC}: $dir is already a mountpoint"
         return 1
     fi
-    sudo mount -o noatime,nodiratime "${dev}" "${dir}" >& /dev/null
+    sudo mkdir -p "${dir}"
+    sudo mount -t ext2 -o noatime,lazytime,discard "$dev" "$dir"
     zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_perform_mount:${ZRAMDISK_COLOR_NC} Mounting process completed." >&2
-
+    _zramdisk_link_home
     # Fix ownership
-    sudo chown "$USER:$USER" "$dir" || {
+    sudo chown "$(id -u):$(id -g)" "$dir" || {
         print -P " ${ZRAMDISK_COLOR_RED}zramdisk:${ZRAMDISK_COLOR_NC} chown FAILED with exit code ${?}" >&2
         return 1
     }
     zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_perform_mount:${ZRAMDISK_COLOR_NC} Ownership of $dir fixed." >&2
     return 0
+}
+
+_zramdisk_link_home() {
+    local target="$zramdisk_dir"
+    local symlink="$HOME/zramdisk"
+
+    # if not mounted, do nothing
+    [[ -d "$target" ]] || return
+
+    # if exists -> hands off
+    if [[ -L "$symlink" && "$(readlink -f "$symlink")" == "$target" ]]; then
+        return
+    fi
+
+    # wrong target or file → remove
+    [[ -e "$symlink" || -L "$symlink" ]] && command rm -rf -- "$symlink"
+
+    command ln -s -- "$target" "$symlink"
 }
 
 #ZRAMDISK_SCRIPT
