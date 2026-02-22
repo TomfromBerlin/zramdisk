@@ -15,7 +15,7 @@
 # TomfromBerlin 2025-2026                                                #
 ##########################################################################
 emulate -L zsh
-setopt LOCALOPTIONS EXTENDED_GLOB TYPESET_SILENT RC_QUOTES
+setopt LOCALOPTIONS EXTENDED_GLOB TYPESET_SILENT RC_QUOTES no_auto_pushd
 typeset -gA Plugins
 Plugins[ZRAMDISK]="${0:h}"
 typeset -g ZRAMDISK_PLUGIN_DIR="${0:A:h}"
@@ -25,6 +25,17 @@ typeset -g ZRAMDISK_FUNC_DIR="${ZRAMDISK_PLUGIN_DIR}/functions"
 autoload -Uz is-at-least
 if ! is-at-least 5.5; then
     source "${ZRAMDISK_FUNC_DIR}/zramdisk_wrong_zsh_version" && zramdisk_wrong_zsh_version
+    source "${ZRAMDISK_FUNC_DIR}/zramdisk_plugin_unload" && zramdisk_plugin_unload
+    return 1
+fi
+
+local cgroupfs2_exist
+cgroupfs2_exist="$(stat -fc %T /sys/fs/cgroup)"
+if  [[ "${cgroupfs2_exist}" != 'cgroup2fs' ]] ; then
+    print -P '\n%F{red}╭─────────────────────────────────────────────╮%f' > /dev/tty
+    print -P '%F{red}│%f ⚠️ zramdisk: Your kernel seems to be to old %F{red}│%f' > /dev/tty
+    print -P '%F{red}│%f   %F{blue}cgroupfs2%f not available - Plugin disabled %F{red}│%f' > /dev/tty
+    print -P '%F{red}╰─────────────────────────────────────────────╯%f\n' > /dev/tty
     source "${ZRAMDISK_FUNC_DIR}/zramdisk_plugin_unload" && zramdisk_plugin_unload
     return 1
 fi
@@ -83,7 +94,7 @@ fi
 # Check for other required tools
 local -a missing_tools=()
 local tools
-for tools in awk date gdbus grep lsmod mkfs.ext4 mount umount rm sed sleep sudo touch tput ; do
+for tools in awk chown date fstrim gdbus grep lsmod mkfs.ext4 mount umount readlink rm sed sleep sudo touch tput ; do
     if ! command -v "${tools}" &>/dev/null; then
         missing_tools+=("${tools}")
     fi
@@ -96,26 +107,32 @@ if (( ${#missing_tools[@]} > 0 )); then
     return 1
 fi
 
+CG="/sys/fs/cgroup/user.slice/user-$UID.slice/user@$UID.service/zramdisk"
+mkdir "$CG"
+: ${XDG_STATE_HOME:=$HOME/.local/state}
+STATEFILE="$XDG_STATE_HOME/zramdisk/state"
+mkdir -p "${STATEFILE:h}"
+
+RAM=$(awk '/MemTotal/ {print $2/1000/1000}' /proc/meminfo)
+HIGH=$((RAM*40/100))
+MAX=$((RAM/2))
+echo $HIGH > "$CG/memory.high"
+echo $MAX  > "$CG/memory.max"
+
 TRAPWINCH() {
     zle && zle -R
 }
 
 typeset -g ZRAMDISK_LOADED=1
 
-# Defaults
-# ────────────────────────────────────────────────────────────────
-: ${zramdisk_size:=$(awk '/^MemTotal:/ {print $2/1024/1024/2}' /proc/meminfo)GiB}
-: ${zramdisk_comp_alg:=zstd}
-: ${zramdisk_dir:="${HOME}/zramdisk"}
-: ${zramdisk_debug:=0}
-
-# Load UI helpers
+# Load UI helpers & default values
 [[ -f "${ZRAMDISK_FUNC_DIR}/zramdisk_ui" ]] && source "${ZRAMDISK_FUNC_DIR}/zramdisk_ui"
+[[ -f "${ZRAMDISK_FUNC_DIR}zramdisk_default_values" ]] && source "${ZRAMDISK_FUNC_DIR}/zramdisk_default_values"
 
 # ────────────────────────────────────────────────────────────────
 # Autoload core functions
 # ────────────────────────────────────────────────────────────────
-autoload -Uz zramdisk_ui zramdisk_menu zramdisk_zram_available
+autoload -Uz zramdisk_ui zramdisk_menu zramdisk_zram_available zramdisk_default_values
 
 # ────────────────────────────────────────────────────────────────
 # Lazy-load (loading scripts on demand)
@@ -186,7 +203,7 @@ zramdisk_no_color() {
     zramdisk_no_color "$@"
 }
 zramdisk_no_unit() {
-    source "${ZRAMDISK_FUNC_DIR}/zramdisk_size"
+    source "${ZRAMDISK_FUNC_DIR}/zramdisk_size_func"
     zramdisk_no_unit "$@"
 }
 zramdisk_notify_me() {
@@ -194,7 +211,7 @@ zramdisk_notify_me() {
     zramdisk_notify_me "$@"
 }
 zramdisk_parse_size_input() {
-    source "${ZRAMDISK_FUNC_DIR}/zramdisk_size"
+    source "${ZRAMDISK_FUNC_DIR}/zramdisk_size_func"
     zramdisk_parse_size_input "$@"
 }
 zramdisk_perform_mount() {
@@ -229,9 +246,9 @@ zramdisk_setup_success() {
     source "${ZRAMDISK_FUNC_DIR}/zramdisk_setup_success"
     zramdisk_setup_success "$@"
 }
-zramdisk_size() {
-    source "${ZRAMDISK_FUNC_DIR}/zramdisk_size"
-    zramdisk_size "$@"
+zramdisk_size_func() {
+    source "${ZRAMDISK_FUNC_DIR}/zramdisk_size_func"
+    zramdisk_size_func "$@"
 }
 zramdisk_troubleshooting() {
     source "${ZRAMDISK_FUNC_DIR}/zramdisk_troubleshooting"
@@ -331,7 +348,7 @@ zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC
     "${footer[@]}"
 
     read -sk 1
-    clear
+
     zramdisk_menu
 }
 
@@ -434,22 +451,22 @@ zramdisk_print_box \
     read -sk choice
     case "$choice" in
         1) if lsmod | grep -q '^zram'; then
-              clear && zramdisk_setup
+              zramdisk_setup
            else
                sudo modprobe zram
                clear
                zramdisk_menu
            fi
            ;;
-        2) clear && zramdisk_remove ;;
-        3) clear && zramdisk_prepare_mount ;;
-        4) clear && zramdisk_umount ;;
-        5) clear && zramdisk_diag ;;
-        6) clear && zramdisk_benchmark ;;
-        7) clear && zramdisk_plugin_unload ;;
-        8) clear && zramdisk_help ;;
-        0) clear && tpwrtr "Hasta la vista, baby." .02 && return 0 ;;
-        c) clear && zramdisk_no_color ;;
+        2) zramdisk_remove ;;
+        3) zramdisk_prepare_mount ;;
+        4) zramdisk_umount ;;
+        5) zramdisk_diag ;;
+        6) zramdisk_benchmark ;;
+        7) zramdisk_plugin_unload ;;
+        8) zramdisk_help ;;
+        0) tpwrtr "Hasta la vista, baby." .02 && return 0 ;;
+        c) zramdisk_no_color ;;
         d)
             if (( zramdisk_debug )); then
                 typeset -g zramdisk_debug=0
@@ -461,9 +478,9 @@ zramdisk_print_box \
                 zramdisk_menu
             fi
             ;;
-        n) clear && zramdisk_notify_me ;;
+        n) zramdisk_notify_me ;;
 
-        *) clear && tpwrtr "Invalid choice. Menu closed." .02 && return 0 ;;
+        *) tpwrtr "Invalid choice. Menu closed." .02 && return 0 ;;
 
     esac
 }
@@ -475,12 +492,12 @@ zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC
     (( $# )) && shift
 
     case "$cmd" in
-        setup)                clear && zramdisk_setup "$@" ;;
-        remove)               clear && zramdisk_remove "$@";;
-        status)               clear && zramdisk_diag "$@" ;;
-        bench)                clear && zramdisk_benchmark "$@" ;;
-        on|mount)             clear && zramdisk_prepare_mount "$@" ;;
-        off|unmount|umount)   clear && zramdisk_umount "$@" ;;
+        setup)                zramdisk_setup "$@" ;;
+        remove)               zramdisk_remove "$@";;
+        status)               zramdisk_diag "$@" ;;
+        bench)                zramdisk_benchmark "$@" ;;
+        on|mount)             zramdisk_prepare_mount "$@" ;;
+        off|unmount|umount)   zramdisk_umount "$@" ;;
         debug)
             if [[ "$1" == "on" ]]; then
                 typeset -g zramdisk_debug=1
@@ -490,15 +507,15 @@ zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC
                 echo -e "${ZRAMDISK_COLOR_GREEN}[zramdisk]${ZRAMDISK_COLOR_NC} Debug mode disabled"
             fi
             ;;
-        unload)               clear && zramdisk_plugin_unload "$@" ;;
-        help|--help)          clear && zramdisk_help "$@" ;;
-        menu)                 clear && zramdisk_menu "$@" ;;
-        error)                clear && zramdisk_error_list "$@" ;;
-        trouble)              clear && zramdisk_troubleshooting "$@" ;;
-        diag)                 clear && zramdisk_diag "$@" ;;
-        diagnose)             clear && zramdisk_diagnose "$@" ;;
-        restore-prompt)       clear && zramdisk_restore_prompt "$@" && exec zsh ;;
-        "")                   clear && zramdisk_help ;;
+        unload)               zramdisk_plugin_unload "$@" ;;
+        help|--help)          zramdisk_help "$@" ;;
+        menu)                 zramdisk_menu "$@" ;;
+        error)                zramdisk_error_list "$@" ;;
+        trouble)              zramdisk_troubleshooting "$@" ;;
+        diag)                 zramdisk_diag "$@" ;;
+        diagnose)             zramdisk_diagnose "$@" ;;
+        restore-prompt)       zramdisk_restore_prompt "$@" && exec zsh ;;
+        "")                   zramdisk_help ;;
     esac
 }
 #zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC} Reached autocompletion" >&2
