@@ -18,6 +18,7 @@ zramdisk_umount() {
 zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_unmount:${ZRAMDISK_COLOR_NC} Reached function zramdisk_unmount" >&2
     emulate -L zsh
     sudo umount -d -q "$zramdisk_dir" || print -P " ${ZRAMDISK_COLOR_CYAN}zramdisk_unmount:${ZRAMDISK_COLOR_NC} $zramdisk_dir is not a mount point."
+    fstrim -v "$zramdisk_dir" 2>/dev/null
     return 0
 }
 #ZRAMDISK_SCRIPT
