@@ -49,7 +49,7 @@ ${ZRAMDISK_COLOR_RED}CTRL-C${ZRAMDISK_COLOR_NC} to abort"
 the config file will be deleted and
 a new configuration will be created."
     )
-    clear
+
     zramdisk_print_box \
     "${title[@]}" \
     "${body[@]}" \
@@ -59,8 +59,10 @@ a new configuration will be created."
 
     read -sk input
     echo
-    if [[ "$input" != [Yy] ]] ; then
+    if [[ "$input" == [n] ]] ; then
         command rm -f "$config_file"
+        zramdisk_create
+    else
+        zramdisk_create
     fi
-    zramdisk_create_disk
 }
