@@ -57,13 +57,10 @@ zramdisk_setup_start() {
             d=$(basename "$dev")
             algo=$(zramctl "${dev}" -o ALGORITHM -n)
             size_raw=$(zramctl "${dev}" -o DISKSIZE -n)
-
             # Remove everything from output except numbers
             size+="${size_raw[@]//[^0-9]/}"
-
             # Not configured? → there is no size
-            [[ -z "${size[@]}" || "${size[@]}" -eq 0 ]] && continue
-
+            [[ -z "${size[@]}" || "${size[@]}" = 0 ]] && continue
             # If size > 0 then the device is configured and mounted
             ((size > 0)) && mnt+=$(grep -w zramdisk /proc/self/mounts | awk '{print $2}')
             # If $mnt is empty → Device is *configured but not mounted*
@@ -73,7 +70,6 @@ zramdisk_setup_start() {
                 typeset -g zram_device="/dev/zram${dev[@]}"
                 typeset -g zramdisk_size="${size_raw[@]}"
             fi
-
             if [[ "${d}" == /dev/zram0 && mp="$(zramctl ${d[@]} -o MOUNTPOINT -n)" ]]; then
                 # Let's have a fallback with check of /proc/self/mountinfo
                 [[ -z "${mp[@]}" || "${mp[@]}" == "-" || "${mp[@]}" == "[SWAP]" ]] && mp=$(cat /proc/self/mountinfo | grep /dev/loop | awk '{print $5}')
@@ -99,28 +95,25 @@ zramdisk_setup_start() {
             fi
         done
     fi
-
     if  [[ -n "${st}" ]] ; then
         #zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_setup:${ZRAMDISK_COLOR_NC} Reached zramdisk_setup#query" >&2
-        #clear
+        #
         local -a title body footer
         local choice
         title=("${ZRAMDISK_COLOR_YELLOW}ZRAMDISK Setup - FOUND EXISTING DEVICE${ZRAMDISK_COLOR_NC}")
         body=("$init_lines[@]")
         footer=("Continue anyway and create e new device? ${ZRAMDISK_COLOR_GREEN}[Y]${ZRAMDISK_COLOR_NC}es/${ZRAMDISK_COLOR_RED}[n]${ZRAMDISK_COLOR_NC}o")
 
-        clear
+
         zramdisk_print_box \
             "${title[@]}" \
             "${body[@]}" \
             "${footer[@]}"
-
         read -sk choice
-
         case "$choice" in
         y) zramdisk_create ;;
         n)
-            clear
+
             unset title && local title=("${ZRAMDISK_COLOR_YELLOW}Setup cancelled!${ZRAMDISK_COLOR_NC}")
             unset footer && local footer=(" ${ZRAMDISK_COLOR_BLUE}${d}${ZRAMDISK_COLOR_NC} is ready to use and mounted at
 ${ZRAMDISK_COLOR_BLUE}${zramdisk_dir}.${ZRAMDISK_COLOR_NC}")
@@ -132,24 +125,19 @@ ${ZRAMDISK_COLOR_BLUE}${zramdisk_dir}.${ZRAMDISK_COLOR_NC}")
             ;;
         esac
     fi
-
     zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_setup:${ZRAMDISK_COLOR_NC} Reached function zramdisk_setup_start - end of zramdisk_print_box" >&2
-
     if [[ -o interactive || -t 0 ]]; then
         #zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_setup:${ZRAMDISK_COLOR_NC} Reached zramdisk_setup#query" >&2
-        #clear
+        #
         local -a title body footer
         local choice
         title=("${ZRAMDISK_COLOR_YELLOW}ZRAMDISK Setup${ZRAMDISK_COLOR_NC}")
         footer=("Run setup now? ${ZRAMDISK_COLOR_GREEN}[Y]${ZRAMDISK_COLOR_NC}es/${ZRAMDISK_COLOR_RED}[n]${ZRAMDISK_COLOR_NC}o")
 
-        clear
         zramdisk_print_box \
             "${title[@]}" \
             "${footer[@]}"
-
         read -sk choice
-
         case "$choice" in
         y) zramdisk_create ;;
         n)
@@ -157,7 +145,6 @@ ${ZRAMDISK_COLOR_BLUE}${zramdisk_dir}.${ZRAMDISK_COLOR_NC}")
             unset body && body=("You can run ${ZRAMDISK_COLOR_BLUE}zramdisk setup${ZRAMDISK_COLOR_NC} later.${ZRAMDISK_COLOR_NC}")
             unset footer && footer=("Abort.")
 
-            clear
             zramdisk_print_box \
                 "${title}" \
                 "${body}" \
