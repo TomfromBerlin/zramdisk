@@ -77,7 +77,7 @@ Uninitialized devices will not work with ${ZRAMDISK_COLOR_BLUE}zramctl${ZRAMDISK
 and should generally be removed before setup.
 ")
         footer=("Press any key to return to device selection...")
-        clear
+
         zramdisk_print_box \
         "${title}" \
         "${body}" \
@@ -99,7 +99,7 @@ Uninitialized devices will not work with ${ZRAMDISK_COLOR_BLUE}zramctl${ZRAMDISK
 and should generally be removed before setup.
 ")
         footer=("Press any key to return to device selection...")
-        clear
+
         zramdisk_print_box \
         "${title}" \
         "${body}" \
@@ -116,13 +116,13 @@ and should generally be removed before setup.
         # 1. Determine device (Config → Validation → Interaction if necessary)
         zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} determine device" >&2
         zram_device=$(zramdisk_determine_device) || return 1
-        # 2. Determin mountpoint (Config or Default)
+        # 2. Determine mountpoint (Config or Default)
         zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} Reached determine mount" >&2
         zramdisk_dir=$(zramdisk_determine_mountpoint)
         # 3. Mount process
-        zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} Reached create disk" >&2
+        zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} call func zramdisk_create_disk" >&2
         zramdisk_create_disk
-        zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} Reached perfom mount" >&2
+        zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} call func zramdisk_perform_mount" >&2
         zramdisk_perform_mount "$zram_device" "$zramdisk_dir"
     fi
     zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} Reached end of function" >&2
