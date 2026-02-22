@@ -1,0 +1,231 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_size_func() {
+zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_size_func:${ZRAMDISK_COLOR_NC} Reached function zramdisk_size_func" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+
+    zramdisk_debug "${ZRAMDISK_COLOR_CYAN}Reached zramdisk_size_func${ZRAMDISK_COLOR_NC}" >&2
+
+    local input total_kb total_bytes default_percent default_gib total_ram min_bytes bytes title body msg for_gib one_gib perc_sign
+
+    # determine RAM
+    total_kb="$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)"
+    total_bytes="$((total_kb * 1024))"
+    total_ram=$(printf '%.1f' "${total_bytes} /1024. / 1024. / 1024.")
+    perc_sign=$(print -P '%s\%'"")
+
+    # Defaults
+    default_percent='25%%'
+    default_gib="$((total_kb / 4 / 1024 / 1024))"
+    min_bytes="$((16 * 1024 * 1024))" # 16 MiB
+
+    _4_gib=$(printf '%.1f%s' "4294967296. * 100 / ${total_bytes}" "%%") # gives 4GiB in percentage of total RAM with one decimal
+    _1_gib=$(printf '%.1f%s' "1073741824. * 100 / ${total_bytes}" "%%") # gives 1GiB in percentage of total RAM with one decimal
+    _25perc=$(printf '%.2f%s' "${total_kb} / 1024 ** 2 / 4." "G")      # gives 25 percent of total RAM in GiB with two decimals
+
+    while true; do
+
+        title=("${ZRAMDISK_COLOR_YELLOW}zRAM Disk Size${ZRAMDISK_COLOR_NC}")
+        body=(
+            "
+${ZRAMDISK_COLOR_CYAN}Detected total RAM:  ${ZRAMDISK_COLOR_YELLOW}${total_ram}G
+${ZRAMDISK_COLOR_CYAN}Suggested size:      ${ZRAMDISK_COLOR_YELLOW}${default_gib}G
+${ZRAMDISK_COLOR_CYAN}Default:             ${ZRAMDISK_COLOR_YELLOW}${default_percent}${ZRAMDISK_COLOR_NC}
+
+Enter the desired size:
+
+Examples:
+
+${ZRAMDISK_COLOR_BLUE}25%% ${ZRAMDISK_COLOR_NC}  → percentage of RAM${ZRAMDISK_COLOR_NC} → ${ZRAMDISK_COLOR_BLUE}${_25perc}${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_BLUE}4G${ZRAMDISK_COLOR_NC}    → GiB → 4096 MiB${ZRAMDISK_COLOR_NC}    → ${ZRAMDISK_COLOR_BLUE}~${_4_gib}${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_BLUE}1G${ZRAMDISK_COLOR_NC}    → GiB → 1024 MiB    → ${ZRAMDISK_COLOR_BLUE}~${_1_gib}${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_BLUE}16M${ZRAMDISK_COLOR_NC}   → MiB → 16384 KiB
+
+Accepted units:
+  %%, K[KB], M[MB], G[GB], T[TB]
+"
+        )
+
+        msg=("Your choice ($(( ${min_bytes} / 1024 / 1024 ))M at least):")
+
+#        clear
+        zramdisk_print_box \
+            "${title[@]}" \
+            "${body[@]}" \
+            "" \
+            "ask" \
+            "${msg[@]}"
+
+        read -r _input
+
+        input="${_input:-${default_percent}${perc_sign}}"
+
+        # Parse
+        bytes="$(zramdisk_parse_size_input ${input} ${total_bytes})"
+        _status=${?}
+        case "${_status}" in
+        0) ;; # OK
+        2)
+            zramdisk_no_unit "${input}"
+            continue
+            ;;
+        3)
+            print -P "${ZRAMDISK_COLOR_RED}Invalid percentage:${ZRAMDISK_COLOR_NC} ${input}"
+            read -srk 1
+            continue
+            ;;
+        4)
+            zramdisk_no_unit "${input}"
+            continue
+            ;;
+        *)
+            print -P "${ZRAMDISK_COLOR_RED}Unknown error parsing input.${ZRAMDISK_COLOR_NC}"
+#            read -srk 1
+            continue
+            ;;
+        esac
+        zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_size_func: min size${ZRAMDISK_COLOR_NC}" >&2
+        # min size
+        if (( bytes < min_bytes )); then
+            print -P "${ZRAMDISK_COLOR_RED}Too small:${ZRAMDISK_COLOR_NC} Minimum is 16 MiB."
+            read -srk 1
+            continue
+        fi
+
+        # Everything okay - break
+        break
+    done
+
+    typeset -g zramdisk_size
+    zramdisk_size="$((bytes / 1024 / 1024))M"
+    typeset -g zramdisk_size_bytes
+    zramdisk_size_bytes=$bytes
+#    zramdisk_current_choice
+    #read -sk 1
+    zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_size_func:${ZRAMDISK_COLOR_NC} Success" >&2
+    return 0
+}
+
+zramdisk_parse_size_input() {
+zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_size_func:${ZRAMDISK_COLOR_NC} Reached function zramdisk_parse_size_input" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+    local input="$1"
+    local total_bytes="$2" # needed for percentages
+    local number unit bytes factor
+
+    # Normalize: remove spaces
+    input="${input//[[:space:]]/}"
+
+    # If empty -> use default value (25% of available RAM)
+    if [[ -z $input ]]; then
+        print -P "${ZRAMDISK_COLOR_RED}ERROR${ZRAMDISK_COLOR_NC}: Empty input. Using default value." >&2
+        zramdisk_size="${default_percent}"
+        return 0
+    elif [[ $input =~ '^([0-9]+)([a-zA-Z%%]*)$' ]]; then
+        # Separate number and unit
+        number="${match[1]}"
+        unit="${match[2]}"
+
+        # Check if unit is empty
+        if [[ -z "$unit" ]]; then
+#            print -P "$number" "$unit"
+            zramdisk_no_unit "$number" || return 1
+        fi
+
+        # Unit uppercase (but preserve %)
+        if [[ $unit != "%" ]]; then
+            unit="${unit:u}"
+        fi
+    else
+        print -P "${ZRAMDISK_COLOR_RED}ERROR${ZRAMDISK_COLOR_NC}: Invalid format: ${input}" >&2
+        return 1
+    fi
+
+    # percentage
+    if [[ $unit == "%" ]]; then
+        if ((number < 1 || number > 100)); then
+            print -P "${ZRAMDISK_COLOR_RED}ERROR${ZRAMDISK_COLOR_NC}: The percentage must be between 1 and 100.\n" >&2
+            return 1
+        fi
+#        perc2bytes=$((total_bytes * number / 100))
+        bytes=$((total_bytes * number / 100))
+        printf "%d" "$bytes"
+        return 0
+    fi
+
+    # Mapping: short = long, e.g. K = KB
+    case "$unit" in
+#        % ) $perc2bytes ;;
+        K | KB) factor=$((1024)) ;;
+        M | MB) factor=$((1024 * 1024)) ;;
+        G | GB) factor=$((1024 * 1024 * 1024)) ;;
+        T | TB) factor=$((1024 * 1024 * 1024 * 1024)) ;;
+        *)
+        print -P "${ZRAMDISK_COLOR_RED}ERROR${ZRAMDISK_COLOR_NC}: Unknown unit: %s\n" "$unit" >&2
+        return 1
+        ;;
+    esac
+
+    bytes=$((number * factor))
+    printf "%d" "$bytes"
+}
+
+zramdisk_no_unit() {
+zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_size_func:${ZRAMDISK_COLOR_NC} Reached function zramdisk_no_unit" >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+    typeset -g unit
+    local answer
+    number=$input
+    zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_size_func:${ZRAMDISK_COLOR_NC} Reached var perc_sign" >&2
+    perc_sign=$(printf '%s%%' "")
+    zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_size_func:${ZRAMDISK_COLOR_NC} Reached zramdisk_print_box no or wrong unit" >&2
+    title=("No or wrong unit specified")
+    body=(
+"What do you mean:
+        1) ${number}%% → percent
+        2) ${number}MB → Mebibyte
+        3) ${number}GB → Gibibyte
+        4) ${number}TB → Tebibyte"
+        )
+    footer=("Answer (1/2/3/4): ")
+
+    zramdisk_print_box >&2 \
+    "${title[@]}" \
+    "${body[@]}" \
+    "${footer[@]}"
+
+    zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_size_func:${ZRAMDISK_COLOR_NC} Reached read choice" >&2
+    read -rsk answer
+    zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_size_func:${ZRAMDISK_COLOR_NC} Reached case choice" >&2
+    typeset -g unit
+    case "$answer" in
+    1) unit="$perc_sign" ;;
+    2) unit="MB" ;;
+    3) unit="GB" ;;
+    4) unit="TB" ;;
+    *)
+        print -P "${ZRAMDISK_COLOR_RED}ERROR${ZRAMDISK_COLOR_NC}: Invalid choice.\n" >&2
+        return 1
+        ;;
+    esac
+#    printf '%s\n%s\n' "$number" "$unit"
+    return 0
+}
+#ZRAMDISK_SCRIPT
