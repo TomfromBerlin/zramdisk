@@ -18,32 +18,35 @@ zramdisk_create_disk() {
 zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_create:${ZRAMDISK_COLOR_NC} Reached function zramdisk_create_disk" >&2
     emulate -L zsh
     setopt LOCALOPTIONS
-    local dev
+    local dev ZRAM_ID
     if [[ $device_is_mounted == true ]]; then break ; fi
     # create zRAM Device
     if [[ -n "$zramdisk_size" && -n "${zramdisk_comp_alg}" ]]; then
-        sudo zramctl --find -s "${zramdisk_size}" -a "${zramdisk_comp_alg}"
+    zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_create:${ZRAMDISK_COLOR_NC} Reached call zramdisk_create_zram_device" >&2
+        ZRAM_ID=$(zramdisk_create_zram_device)
+        echo "$ZRAM_ID" > "$STATEFILE"
+
+        id=$(<"$STATEFILE")
+        dev="/dev/zram$id"
+        sys="/sys/block/zram$id"
+
+        # wait until sysfs exists
+        while [[ ! -e "$sys/comp_algorithm" ]]; do
+            sleep 0.02
+        done
+
+        # 1. algorithmus first!
+        echo "$zramdisk_comp_alg" | sudo tee "$sys/comp_algorithm" >&/dev/null
+
+        # optional:
+        # echo "$memlimit" | sudo tee "$sys/mem_limit" > /dev/null
+
+        # 2. init → have to be the last
+        SIZE_BYTES=$(numfmt --from=iec "$zramdisk_size")
+        echo "$SIZE_BYTES" | sudo tee "$sys/disksize" > /dev/null
         typeset -g zram_device
-        for dev in {99..1}; do zram_device="$(zramctl zram${dev} -o NAME -n)" >&/dev/null; done >&/dev/null
-    fi || {
-        local -a title body msg
-        title=("${ZRAMDISK_COLOR_RED}zramctl FAILED!${ZRAMDISK_COLOR_NC}")
-        body=(
-"In function zramdisk_create_disk: ${ZRAMDISK_COLOR_RED}zramctl FAILED${ZRAMDISK_COLOR_NC}
-with Exitcode: ${ZRAMDISK_COLOR_RED}${?}${ZRAMDISK_COLOR_NC}")
-        msg=(
-"Run ${ZRAMDISK_COLOR_BLUE}zramdisk errors${ZRAMDISK_COLOR_NC} and/or ${ZRAMDISK_COLOR_BLUE}zramdisk trouble${ZRAMDISK_COLOR_NC} for possible reasons.
-You can also run ${ZRAMDISK_COLOR_BLUE}zramdisk diagnose${ZRAMDISK_COLOR_NC} to see, what's going on."
-        )
-        clear
-        zramdisk_print_box \
-            "${title[@]}" \
-            "${body[@]}" \
-            "" \
-            "err" \
-            "${msg[@]}"
-        return 1
-    }
+        zram_device="${dev}"
+    fi
 
     zramdisk_prepare_mount || {
         local -a title body msg
@@ -55,7 +58,7 @@ with Exitcode: ${ZRAMDISK_COLOR_RED}${?}${ZRAMDISK_COLOR_NC}")
 "Run ${ZRAMDISK_COLOR_BLUE}zramdisk errors${ZRAMDISK_COLOR_NC} and/or ${ZRAMDISK_COLOR_BLUE}zramdisk trouble${ZRAMDISK_COLOR_NC} for possible reasons.
 You can also run ${ZRAMDISK_COLOR_BLUE}zramdisk diagnose${ZRAMDISK_COLOR_NC} to see, what's going on."
         )
-        clear
+
         zramdisk_print_box \
             "${title[@]}" \
             "${body[@]}" \
@@ -74,17 +77,16 @@ You can also run ${ZRAMDISK_COLOR_BLUE}zramdisk diagnose${ZRAMDISK_COLOR_NC} to 
 ${ZRAMDISK_COLOR_GREEN} Mountpoint on:             ${ZRAMDISK_COLOR_YELLOW}${zramdisk_dir}
 ${ZRAMDISK_COLOR_GREEN} zRAM Disk Size:            ${ZRAMDISK_COLOR_YELLOW}${zramdisk_size}
 ${ZRAMDISK_COLOR_GREEN} Compression Algorithm:     ${ZRAMDISK_COLOR_YELLOW}${zramdisk_comp_alg}
+Your input: ${ZRAMDISK_COLOR_RED}${input}${ZRAMDISK_COLOR_NC} → ${ZRAMDISK_COLOR_YELLOW}$(( total_bytes / zramdisk_size_bytes * 100 ))%% of your total RAM.${ZRAMDISK_COLOR_NC}
 
+Symbolic link will be created in $HOME
 Configuration will be written to
 ${ZRAMDISK_COLOR_BLUE}${config_file}${ZRAMDISK_COLOR_NC}"
     )
 
     footer=("${ZRAMDISK_COLOR_GREEN}Creation completed successfully.${ZRAMDISK_COLOR_NC}")
-    msg=(
-"
-Press any key to write config..."
-    )
-    clear
+    msg=("Press any key to write config...")
+
     zramdisk_print_box \
         "${title[@]}" \
         "${body[@]}" \
@@ -96,5 +98,12 @@ Press any key to write config..."
 
     zramdisk_write_config
     return 0
+}
+
+zramdisk_create_zram_device() {
+    zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_create:${ZRAMDISK_COLOR_NC} Reached function zramdisk_create_zram_device" >&/dev/null
+    local id
+    id=$(sudo sh -c 'exec < /sys/class/zram-control/hot_add; cat')
+    printf '%s\n' "${id}"
 }
 #ZRAMDISK_SCRIPT
