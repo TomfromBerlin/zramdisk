@@ -133,6 +133,7 @@ zramdisk_print_box() {
 #   "${msg[@]}"
     emulate -L zsh
     setopt LOCALOPTIONS no_aliases
+    clear
 
     # ----------------------------------------------------------------------
     # PARAMETER
