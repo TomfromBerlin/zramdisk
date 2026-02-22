@@ -36,6 +36,8 @@ zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_remove:${ZRAMDISK_COLOR_NC} Reac
         [zram1-zram99]")
         zramdisk_print_box \
         "${title}" \
+        "" \
+        "" \
         "info" \
         "${msg}"
         return
@@ -63,10 +65,10 @@ or do you want to select a certain device?
 In both cases, the mount point ${ZRAMDISK_COLOR_BLUE}$zramdisk_dir${ZRAMDISK_COLOR_NC} is also removed."
     )
     msg=(
-"Select [a] to automatically remove all devices (except ${ZRAMDISK_COLOR_BLUE}/dev/zram0${ZRAMDISK_COLOR_NC}),
+"Select [a] to automatically remove all devices created with this plugin.,
        [m] to select a device, or any other key to cancel."
     )
-    clear
+
     zramdisk_print_box \
     "${title[@]}" \
     "${body[@]}" \
@@ -99,20 +101,23 @@ zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_remove:${ZRAMDISK_COLOR_NC} Reac
     # Build device list with mountpoint info
     # ----------------------------------------------------------------------
     local -a init_lines=() d=() algo=() size=() mp=() st=() st_c
-    local dev first=1
+    local dev first=1 symlink="$HOME/zramdisk"
 
     for dev in /dev/zram*(N); do
-        d=$(basename "$dev[@]")
-        algo="$(zramctl ${dev[@]} -o ALGORITHM -n)"
-        size="$(zramctl ${dev[@]} -o DISKSIZE -n)"
-        mp="$(zramctl ${dev[@]} -o MOUNTPOINT -n)"
+        d=$(basename "$dev")
+        [[ -e /sys/block/$d ]] || continue
+        algo="$(zramctl ${dev} -o ALGORITHM -n)"
+        size="$(zramctl ${dev} -o DISKSIZE -n)"
+        mp="$(zramctl ${dev} -o MOUNTPOINT -n)"
 
-        if [[ ${dev} == /dev/zram0 ]]; then
-            mp="$(zramctl ${dev[@]} -o MOUNTPOINT -n)" #this is not reliable and only usefull for swap devices
+        if [[ ${mp} == [SWAP] ]]; then
+            mp="${mp}" #this is not reliable and only usefull for swap devices
         elif
-            # Let's have a fallback with check of /proc/self/mountinfo
+            # Let's check /proc/self/mountinfo to find non-swap devices
+            # which usually mounted as loop device
             [[ -z "${mp[@]}" || "${mp[@]}" == "-" || "${mp[@]}" == "[SWAP]" ]]; then
-            mp=$(cat /proc/self/mountinfo | grep /dev/loop | awk '{print $5}')
+            #mp=$(cat /proc/self/mountinfo | grep /dev/loop | awk '{print $5}')
+            mp=$(awk -v dev="$dev" '$10==dev {print $5}' /proc/self/mountinfo)
         fi
 
         if [[ -e "/sys/block/$d/initstate" ]]; then
@@ -164,25 +169,32 @@ ${init_lines}"
         elif [[ -n "$chosen_device" ]]; then
             # Confirmation
 #            local title footer msg
-            title="${ZRAMDISK_COLOR_RED}Confirm Removal${ZRAMDISK_COLOR_NC}"
+            title="${ZRAMDISK_COLOR_YELLOW}Confirm Removal${ZRAMDISK_COLOR_NC}"
+            body="Are you sure you want to remove this device?
+If you are unsure, press ${ZRAMDISK_COLOR_CYAN}N${ZRAMDISK_COLOR_NC} and then select ${ZRAMDISK_COLOR_CYAN}2${ZRAMDISK_COLOR_NC} from the menu.
+
+Then press ${ZRAMDISK_COLOR_CYAN}a${ZRAMDISK_COLOR_NC} to safely remove all non-swap devices. ${ZRAMDISK_COLOR_YELLOW}"
             footer=("Selected device: ${ZRAMDISK_COLOR_CYAN}${chosen_device##*/}${ZRAMDISK_COLOR_NC}")
-            msg=(
-"Are you sure you want to remove this device?${ZRAMDISK_COLOR_YELLOW}
-            Confirm [y/N]: ${ZRAMDISK_COLOR_NC}"
+            msg=("Select ${ZRAMDISK_COLOR_GREEN}y${ZRAMDISK_COLOR_NC} or ${ZRAMDISK_COLOR_RED}N${ZRAMDISK_COLOR_NC}: "
 )
 
         zramdisk_print_box \
-        "${title}" \
-        "" \
+        "${title[@]}" \
+        "${body[@]}" \
         "${footer[@]}" \
         "ask" \
         "${msg[@]}"
 
-        read -rqs confirm
+        read -rk1 confirm
 
-            if [[ "$confirm" =~ ^[Yy]$ ]]; then
+            if [[ "$confirm" == [Nn] ]]; then
+                echo "${ZRAMDISK_COLOR_CYAN}Operation cancelled.${ZRAMDISK_COLOR_NC}"
+                sleep 1
+                #unset choice
+                #zramdisk_menu
+            else
                 print -P "Unmounting and removing ${chosen_device}..."
-
+                fstrim -v "$zramdisk_dir" 2>/dev/null
                 # try unmount
                 sudo umount "$chosen_device" 2>/dev/null
 
@@ -192,60 +204,127 @@ ${init_lines}"
                     local dev_num="${chosen_device##*/zram}"
                     echo "$dev_num" | sudo tee /sys/class/zram-control/hot_remove > /dev/null
                 fi
-                print -P "${chosen_device} removed."
-                return 0
-            else
-                echo "${ZRAMDISK_COLOR_CYAN}Operation cancelled.${ZRAMDISK_COLOR_NC}"
-                return 1
+                if [[ -L "$symlink" ]]; then
+                    command rm -rf -- "$symlink"
+                fi
+                title=("${ZRAMDISK_COLOR_YELLOW}Cleanup completed${ZRAMDISK_COLOR_NC}")
+                msg=("Chosen device ${chosen_device} have been removed.")
+
+                zramdisk_print_box \
+                "${title}" \
+                "" \
+                "" \
+                "info" \
+                "${msg}"
+                sleep 1
+                #unset choice
+                #zramdisk_menu
             fi
         else
             echo "${ZRAMDISK_COLOR_RED}Invalid selection.${ZRAMDISK_COLOR_NC}"
+            sleep 1
         fi
     done
-    return 0
+    unset choice
+    zramdisk_menu
 }
 
 zramdisk_remove_auto() {
-zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_remove:${ZRAMDISK_COLOR_NC} Reached zramdisk_remove_auto." >&2
+    emulate -L zsh
+    setopt LOCALOPTIONS
+
+    [[ -f ${STATEFILE} ]] || return 0
+
+    local id dev
+    id=$(<"${STATEFILE}")
+    dev="/dev/zram${id}"
+    local symlink="$HOME/zramdisk"
+
+    # still exists?
+    [[ -e /sys/block/zram$id ]] || {
+        rm -f "$STATEFILE"
+        return 0
+    }
+
+    # unmount if mounted
+    if mount | grep -q "$dev "; then
+        sudo umount "$dev" >/dev/null 2>&1
+    fi
+
+    # remove safely
+    sudo sh -c "echo $id > /sys/class/zram-control/hot_remove" >/dev/null 2>&1
+
+    command rm -f "${STATEFILE}"
+    if [[ -L "$symlink" ]]; then
+        command rm -rf -- "$symlink"
+    fi
+    title=("${ZRAMDISK_COLOR_YELLOW}Cleanup completed${ZRAMDISK_COLOR_NC}")
+    msg=("All devices have been removed.")
+
+    zramdisk_print_box \
+    "${title}" \
+    "" \
+    "" \
+    "info" \
+    "${msg}"
+}
+
+zramdisk_remove_aggro() {
+zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_remove:${ZRAMDISK_COLOR_NC} Reached zramdisk_remove_aggro." >&2
+    [[ -t 0 ]] || {
+    print -u2 "Refusing to run non-interactively."
+    return 1
+    }
     emulate -L zsh
     setopt LOCALOPTIONS
 
     local -a title body footer i zram_devices=() device
     local msg
+    print -P "You're about to use something like a sledge hammer"
+    print -P "to remove ALL non-swap zram devices."
+    read "answer?Do you really want to do that? Type YES: " < /dev/tty
+    [[ $answer == YES ]] || return 1
 
     # try devices from 1 to 99
     # Array for devices
     zram_devices=()
 
     # Phase 1: collect devices
-    for i in {1..99}; do
-        [[ -e "/dev/zram${i}" ]] && zram_devices+=("/dev/zram${i}")
+    for id in {1..99}; do
+        [[ -e "/dev/zram${id}" ]] && zram_devices+=("/dev/zram${id}")
     done >&/dev/null
 
     # Phase 2: Unmount and reset all collected devices
     for device in "${zram_devices[@]}"; do
         # extract device number
-        i="${device##*/zram}"
-
+        id="${device##*/zram}"
         # 1) try unmount
-        sudo umount "$device" >&/dev/null
+        if [[ $(sudo zramctl -o MOUNTPOINT $device -n) != [SWAP] ]] ; then
+        fstrim -v "$device" >/dev/null 2>&1
+        sudo umount "$device" >/dev/null 2>&1
+        fi
 
         # 2) try zramctl reset
-        if ! sudo zramctl --reset "$device" 2>/dev/null; then
+        if [[ $(sudo zramctl -o MOUNTPOINT $device -n) != [SWAP] ]] && ! sudo zramctl --reset "$device" 2>/dev/null; then
             # 3) Fallback: hot_remove
             echo "$i" | sudo tee /sys/class/zram-control/hot_remove >/dev/null 2>&1
+            # echo "$i" > /sys/class/zram-control/hot_remove >/dev/null 2>&1
+            sudo sh -c "echo $STATEFILE > /sys/class/zram-control/hot_remove"
+            rm -f "$STATEFILE"
         fi
     done
 
-    # Phase 3: remove mountpoint directory
-    [[ -d "$HOME/zramdisk" ]] && command rm -d "$HOME/zramdisk" || {
-    [[ -d "$HOME/zramdisk${i}" ]] && command rm -d "$HOME/zramdisk${i}"
+    # Phase 3: remove mountpoint directory and symlink
+    [[ -d "$XDG_RUNTIME_DIR/zramdisk" ]] && command rm -d "$XDG_RUNTIME_DIR/zramdisk" || {
+    [[ -d "$XDG_RUNTIME_DIR/zramdisk${i}" ]] && command rm -d "$XDG_RUNTIME_DIR/zramdisk${i}"}
+    [[ -f "$HOME/zramdisk" ]] && command rm -f "$HOME/zramdisk" || {
+    [[ -f "$HOME/zramdisk${i}" ]] && command rm -f "$HOME/zramdisk${i}"
     }
     # Message box
     if [[ -n "$(zramctl ${dev[@]} -o MOUNTPOINT -n)" ]]; then
         title=("${ZRAMDISK_COLOR_YELLOW}Cleanup completed${ZRAMDISK_COLOR_NC}")
-        msg=("All devices except ${ZRAMDISK_COLOR_BLUE}/dev/zram0${ZRAMDISK_COLOR_CYAN} have been removed.")
-        clear
+        msg=("All devices, except ${ZRAMDISK_COLOR_BLUE}"$(grep -w dev /proc/swaps | sed 's/[[:space:]].*/ > SWAP, /')"${ZRAMDISK_COLOR_CYAN}have been removed.")
+
         zramdisk_print_box \
         "${title}" \
         "" \
@@ -255,7 +334,7 @@ zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_remove:${ZRAMDISK_COLOR_NC} Reac
     else
         title=("${ZRAMDISK_COLOR_YELLOW}Cleanup completed${ZRAMDISK_COLOR_NC}")
         msg=("All devices have been removed.")
-        clear
+
         zramdisk_print_box \
         "${title}" \
         "" \
