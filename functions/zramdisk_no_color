@@ -19,11 +19,11 @@ zramdisk_no_color() {
     if  [[ -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
         command rm "${ZRAMDISK_PLUGIN_DIR}"/no_color
         source "${ZRAMDISK_PLUGIN_DIR}"/zramdisk.plugin.zsh
-        #clear
+        #
     else
         command touch "${ZRAMDISK_PLUGIN_DIR}/no_color"
         source "${ZRAMDISK_PLUGIN_DIR}"/zramdisk.plugin.zsh
-        #clear
+        #
     fi
     zramdisk_menu "$@"
 }
