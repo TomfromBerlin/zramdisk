@@ -14,23 +14,6 @@
 #                                                                        #
 # TomfromBerlin 2025-2026                                                #
 ##########################################################################
-# zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_zramctl_missing:${ZRAMDISK_COLOR_NC} Reached script zramdisk_zramctl_missing" >&2
-# if [[ ! -f "${ZRAMDISK_PLUGIN_DIR}/missing_zramctl" ]]; then
-#     touch "${ZRAMDISK_PLUGIN_DIR}/missing_zramctl"
-#     gdbus call --session \
-#         --dest=org.freedesktop.Notifications \
-#         --object-path=/org/freedesktop/Notifications \
-#         --method=org.freedesktop.Notifications.Notify \
-#         "" 0 "dialog_error" "zramdisk Plugin Message" "The program 'zramctl' was not found. \
-#          The plugin will be unloaded. Consider installing the 'util-linux' package, as it contains the required program." \
-#         '[]' '{"urgency": <2>}' 8000 &>/dev/null &
-# else
-#     PS1_temp="${PS1}"
-#     PS1=$(printf '%s\n%s\n%s\n' " Message from zramdisk Plugin: %F{red}X%f zramctl is missing." " Consider installing the %F{blue}util-linux%f package" "${PS1_temp}")
-#     echo -n
-#     PS1=${PS1_temp}
-# fi
-
 zramdisk_zramctl_missing() {
 zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_zramctl_missing:${ZRAMDISK_COLOR_NC} Reached function zramdisk_zramctl_missing" >&2
     emulate -L zsh
