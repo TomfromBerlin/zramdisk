@@ -1,0 +1,44 @@
+##########################################################################
+#                                                                        #
+#     Everything below this line comes with no warranty of any kind.     #
+#                 Use these file at your own risk!                       #
+#                                                                        #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+##########################################################################
+#                                                                        #
+# The MIT license applies to this and all related files.                 #
+# If you want to modify, remix the code, or give it to your cat, this is #
+# only possible under the terms of this license, and you must distribute #
+# a copy of this license along with the remixed or modified code.        #
+# Yes, even to your cat.                                                 #
+#                                                                        #
+# TomfromBerlin 2025-2026                                                #
+##########################################################################
+zramdisk_font_missing() {
+    local install_cmd
+    case ${distro} in
+        voidlinux|void)
+            install_cmd="/usr/bin/xbps-install -y noto-fonts-emoji     "
+            ;;
+        cachyos|cachy)
+            install_cmd="/usr/bin/pacman -S noto-fonts-emoji           "
+            ;;
+        fedora)
+            install_cmd="/usr/bin/dnf install google-noto-emoji-fonts  "
+            ;;
+        *mint|*ubuntu|*debian)
+            install_cmd="/usr/bin/apt install fonts-color-emoji        "
+            ;;
+        *)
+            install_cmd="your-package-manager install noto-fonts-emoji "
+            ;;
+    esac
+
+    print -P '\n%F{red}╭────────────────────────────────────────────────────╮%f' > /dev/tty
+    print -P '%F{red}│%f      %F{yellow}⚠%f zramdisk: missing font NotoColorEmoji       %F{red}│%f' > /dev/tty
+    print -P '%F{red}├────────────────────────────────────────────────────┤%f' > /dev/tty
+    print -P '%F{red}│%f Consider installing the noto-fonts-emoji package   %F{red}│%f' > /dev/tty
+    print -P '%F{red}│%f with %F{green}${install_cmd}%f%F{red}│%f' > /dev/tty
+    print -P '%F{red}╰────────────────────────────────────────────────────╯%f\n' > /dev/tty
+}
+
