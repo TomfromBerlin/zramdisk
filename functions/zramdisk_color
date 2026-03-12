@@ -14,12 +14,15 @@
 #                                                                        #
 # TomfromBerlin 2025-2026                                                #
 ##########################################################################
-zramdisk_determine_mountpoint() {
-zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_determine_mountpoint:${ZRAMDISK_COLOR_NC} Reached function zramdisk_determine_mountpoint" >&2
-    emulate -L zsh
-    setopt LOCALOPTIONS
-    local dir
-    dir="${1:-${zramdisk_dir:-$XDG_RUNTIME_DIR/zramdisk}}"
-
-    [[ -d "${dir}" ]] || mkdir -p --mode=755 "${dir}"
+zramdisk_color() {
+    if  [[ -f "${ZRAMDISK_PLUGIN_DIR}/color" ]] ; then
+        command rm "${ZRAMDISK_PLUGIN_DIR}"/color
+        source "${ZRAMDISK_PLUGIN_DIR}"/zramdisk.plugin.zsh
+        #
+    else
+        command touch "${ZRAMDISK_PLUGIN_DIR}/color"
+        source "${ZRAMDISK_PLUGIN_DIR}"/zramdisk.plugin.zsh
+        #
+    fi
+    zramdisk_menu "$@"
 }

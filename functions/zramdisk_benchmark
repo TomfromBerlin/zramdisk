@@ -100,8 +100,8 @@ print -P "${ZRAMDISK_COLOR_MAGENTA}╰──────────────
 
     read -sk choice
     case "$choice" in
-    r) clear && zramdisk_select_alg ;;
-    *) clear && zramdisk_menu ;;
+    r) zramdisk_select_alg ;;
+    *) zramdisk_menu ;;
 
     esac
 }

@@ -17,7 +17,7 @@
 
 zramdisk_ui_init() {
     emulate -L zsh
-    if [[ -f "${ZRAMDISK_PLUGIN_DIR}"/no_color ]] ; then
+    if [[ ! -f "${ZRAMDISK_PLUGIN_DIR}"/color ]] ; then
         ZRAMDISK_COLOR_GREEN_BOLD=
         ZRAMDISK_COLOR_GREEN=$'\e[0m'
         ZRAMDISK_COLOR_RED_BOLD=

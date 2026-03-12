@@ -116,7 +116,7 @@ and should generally be removed before setup.
         # 1. Determine device (Config → Validation → Interaction if necessary)
         zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} determine device" >&2
         zram_device=$(zramdisk_determine_device) || return 1
-        # 2. Determine mountpoint (Config or Default)
+        # 2. Determin mountpoint (Config or Default)
         zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_prepare_mount:${ZRAMDISK_COLOR_NC} Reached determine mount" >&2
         zramdisk_dir=$(zramdisk_determine_mountpoint)
         # 3. Mount process
