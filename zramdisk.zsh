@@ -360,15 +360,15 @@ zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC
     local variables="{g,r,y,b,c,m,w,n,toggle}"
     local -a title body msg footer choice n_setting status_debug plugin_enabled zramdisk_color_{g,r,y,b,c,m,w,n,toggle}
 
-    if [[ "${zramdisk_debug}" = 1 && -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+    if [[ "${zramdisk_debug}" = 1 && ! -f "${ZRAMDISK_PLUGIN_DIR}/color" ]] ; then
         status_debug="${ZRAMDISK_COLOR_WHITE_FLASH}⚪${ZRAMDISK_COLOR_NC}"
-    elif [[ "${zramdisk_debug}" = 1 && ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+    elif [[ "${zramdisk_debug}" = 1 && -f "${ZRAMDISK_PLUGIN_DIR}/color" ]] ; then
         status_debug="${ZRAMDISK_COLOR_WHITE_FLASH}🟢${ZRAMDISK_COLOR_NC}"
     elif
-        [[ "${zramdisk_debug}" = 0 && -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+        [[ "${zramdisk_debug}" = 0 && ! -f "${ZRAMDISK_PLUGIN_DIR}/color" ]] ; then
         status_debug="⚫"
     elif
-        [[ "${zramdisk_debug}" = 0  && ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+        [[ "${zramdisk_debug}" = 0  && -f "${ZRAMDISK_PLUGIN_DIR}/color" ]] ; then
         status_debug="🔴"
     fi
     
@@ -466,7 +466,7 @@ zramdisk_print_box \
         7) zramdisk_plugin_unload ;;
         8) zramdisk_help ;;
         0) tpwrtr "Hasta la vista, baby." .02 && return 0 ;;
-        c) zramdisk_no_color ;;
+        c) zramdisk_color ;;
         d)
             if (( zramdisk_debug )); then
                 typeset -g zramdisk_debug=0

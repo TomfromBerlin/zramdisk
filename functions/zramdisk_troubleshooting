@@ -19,15 +19,15 @@ zramdisk_troubleshooting() {
     setopt LOCALOPTIONS
 
 cat <<EOF
-    ${ZRAMDISK_COLOR_MAGENTA}╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-    ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC} First, let's clarify something: we're talking about devices that are stored in RAM and are, by nature, temporary.    ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC}
-    ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC} There are at least two ways to do this:                                                                              ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC}
-    ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC} 1. by creating a system service                                                                                      ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC}
-    ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC} 2. by using a utility program (in this case zramctl).                                                                ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC}
-    ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC} The difference is that a drive that was created as a system service is automatically created                         ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC}
-    ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC} or initialized every time the operating system starts. However, drives that are created with                         ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC}
-    ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC} zramctl are not automatically loaded or initialized when the system starts and must be recreated.                    ${ZRAMDISK_COLOR_MAGENTA}│${ZRAMDISK_COLOR_NC}
-    ${ZRAMDISK_COLOR_MAGENTA}╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯${ZRAMDISK_COLOR_NC}
+    ${ZRAMDISK_COLOR_MAGENTA_DIM}╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+    ${ZRAMDISK_COLOR_MAGENTA_DIM}│${ZRAMDISK_COLOR_NC} First, let's clarify something: we're talking about devices that are stored in RAM and are, by nature, temporary.    ${ZRAMDISK_COLOR_MAGENTA_DIM}│${ZRAMDISK_COLOR_NC}
+    ${ZRAMDISK_COLOR_MAGENTA_DIM}│${ZRAMDISK_COLOR_NC} There are at least two ways to do this:                                                                              ${ZRAMDISK_COLOR_MAGENTA_DIM}│${ZRAMDISK_COLOR_NC}
+    ${ZRAMDISK_COLOR_MAGENTA_DIM}│${ZRAMDISK_COLOR_NC} 1. by creating a system service                                                                                      ${ZRAMDISK_COLOR_MAGENTA_DIM}│${ZRAMDISK_COLOR_NC}
+    ${ZRAMDISK_COLOR_MAGENTA_DIM}│${ZRAMDISK_COLOR_NC} 2. by using a utility program (in this case zramctl).                                                                ${ZRAMDISK_COLOR_MAGENTA_DIM}│${ZRAMDISK_COLOR_NC}
+    ${ZRAMDISK_COLOR_MAGENTA_DIM}│${ZRAMDISK_COLOR_NC} The difference is that a drive that was created as a system service is automatically created                         ${ZRAMDISK_COLOR_MAGENTA_DIM}│${ZRAMDISK_COLOR_NC}
+    ${ZRAMDISK_COLOR_MAGENTA_DIM}│${ZRAMDISK_COLOR_NC} or initialized every time the operating system starts. However, drives that are created with                         ${ZRAMDISK_COLOR_MAGENTA_DIM}│${ZRAMDISK_COLOR_NC}
+    ${ZRAMDISK_COLOR_MAGENTA_DIM}│${ZRAMDISK_COLOR_NC} zramctl are not automatically loaded or initialized when the system starts and must be recreated.                    ${ZRAMDISK_COLOR_MAGENTA_DIM}│${ZRAMDISK_COLOR_NC}
+    ${ZRAMDISK_COLOR_MAGENTA_DIM}╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯${ZRAMDISK_COLOR_NC}
 
  ⚡ "${ZRAMDISK_COLOR_YELLOW}TL;DR${ZRAMDISK_COLOR_CYAN} Common reasons why a ZRAM device is not created (long story short) ⚡
 
@@ -59,8 +59,8 @@ cat <<EOF
     To simplify things, a switch was added, which executes exactly this command:
     ${ZRAMDISK_COLOR_BLUE}zramdisk diag --dmsg${ZRAMDISK_COLOR_NC}
 
-   ${ZRAMDISK_COLOR_MAGENTA}╭────────────────────────────────────────────────────────────────────╮
-   │${ZRAMDISK_COLOR_NC}In short: If ${ZRAMDISK_COLOR_BLUE}hot_add${ZRAMDISK_COLOR_NC} fails → kernel may ${ZRAMDISK_COLOR_RED}not${ZRAMDISK_COLOR_NC} support dynamic devices ${ZRAMDISK_COLOR_MAGENTA}│
+   ${ZRAMDISK_COLOR_MAGENTA_DIM}╭────────────────────────────────────────────────────────────────────╮
+   │${ZRAMDISK_COLOR_NC}In short: If ${ZRAMDISK_COLOR_BLUE}hot_add${ZRAMDISK_COLOR_NC} fails → kernel may ${ZRAMDISK_COLOR_RED}not${ZRAMDISK_COLOR_NC} support dynamic devices ${ZRAMDISK_COLOR_MAGENTA_DIM}│
    ╰────────────────────────────────────────────────────────────────────╯${ZRAMDISK_COLOR_NC}
 EOF
 echo
@@ -241,12 +241,12 @@ cat <<EOF
     ${ZRAMDISK_COLOR_BLUE}sudo modprobe zram num_devices=3${ZRAMDISK_COLOR_NC} (creates three devices) or
     ${ZRAMDISK_COLOR_BLUE}sudo modprobe zram num_devices=4${ZRAMDISK_COLOR_NC} ...you know the drill.
 
-   ${ZRAMDISK_COLOR_MAGENTA}╭──────╮
-   │${ZRAMDISK_COLOR_YELLOW} Note ${ZRAMDISK_COLOR_MAGENTA}╰─────────────────────────────────────────────────────────────────────────────────────────╮
-   │${ZRAMDISK_COLOR_NC} The plugin does not offer functionality for creating zRAM devices with ${ZRAMDISK_COLOR_BLUE}modprobe${ZRAMDISK_COLOR_NC}, as we cannot  ${ZRAMDISK_COLOR_MAGENTA}│
-   │${ZRAMDISK_COLOR_NC} know if a swap file exists and how it was created. Of course, we could find this out, but that ${ZRAMDISK_COLOR_MAGENTA}│
-   │${ZRAMDISK_COLOR_NC} would unnecessarily bloat the code and carry a high risk of corrupting existing configurations ${ZRAMDISK_COLOR_MAGENTA}│
-   │${ZRAMDISK_COLOR_NC} when using ${ZRAMDISK_COLOR_BLUE}modprobe${ZRAMDISK_COLOR_NC}, e.g., by resetting the swap partition.                                    ${ZRAMDISK_COLOR_MAGENTA}│
+   ${ZRAMDISK_COLOR_MAGENTA_DIM}╭──────╮
+   │${ZRAMDISK_COLOR_YELLOW} Note ${ZRAMDISK_COLOR_MAGENTA_DIM}╰─────────────────────────────────────────────────────────────────────────────────────────╮
+   │${ZRAMDISK_COLOR_NC} The plugin does not offer functionality for creating zRAM devices with ${ZRAMDISK_COLOR_BLUE}modprobe${ZRAMDISK_COLOR_NC}, as we cannot  ${ZRAMDISK_COLOR_MAGENTA_DIM}│
+   │${ZRAMDISK_COLOR_NC} know if a swap file exists and how it was created. Of course, we could find this out, but that ${ZRAMDISK_COLOR_MAGENTA_DIM}│
+   │${ZRAMDISK_COLOR_NC} would unnecessarily bloat the code and carry a high risk of corrupting existing configurations ${ZRAMDISK_COLOR_MAGENTA_DIM}│
+   │${ZRAMDISK_COLOR_NC} when using ${ZRAMDISK_COLOR_BLUE}modprobe${ZRAMDISK_COLOR_NC}, e.g., by resetting the swap partition.                                    ${ZRAMDISK_COLOR_MAGENTA_DIM}│
    ╰────────────────────────────────────────────────────────────────────────────────────────────────╯${ZRAMDISK_COLOR_NC}
 
     You can have verbose overview of all initiated zRAM devices with${ZRAMDISK_COLOR_BLUE}
