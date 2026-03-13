@@ -305,32 +305,33 @@ zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC
     local plugin_enabled
 
 zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC} Reached title." >&2
-title=("zRAM Disk Plugin - Help")
+title=("${ZRAMDISK_COLOR_YELLOW_BOLD}zRAM Disk Plugin - Help${ZRAMDISK_COLOR_NC}")
 zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC} Reached body." >&2
-body=("${ZRAMDISK_COLOR_GREEN}Usage:${ZRAMDISK_COLOR_CYAN} zramdisk${ZRAMDISK_COLOR_BLUE_BOLD} menu
-                ${ZRAMDISK_COLOR_GREY}─────────────────────────────────────────────────────
-                ${ZRAMDISK_COLOR_BLUE_BOLD}setup${ZRAMDISK_COLOR_GREY} → create a zRAM device
-                ${ZRAMDISK_COLOR_BLUE_BOLD}remove${ZRAMDISK_COLOR_GREY} → remove a zRAM device
-                ${ZRAMDISK_COLOR_GREY}─────────────────────────────────────────────────────
-                ${ZRAMDISK_COLOR_BLUE_BOLD}mount${ZRAMDISK_COLOR_NC} | ${ZRAMDISK_COLOR_BLUE_BOLD}on${ZRAMDISK_COLOR_GREY} → mount an existing zRAM device
-                ${ZRAMDISK_COLOR_BLUE_BOLD}umount ${ZRAMDISK_COLOR_NC} | ${ZRAMDISK_COLOR_BLUE_BOLD}unmount${ZRAMDISK_COLOR_NC} | ${ZRAMDISK_COLOR_BLUE_BOLD}off${ZRAMDISK_COLOR_GREY} → unmount a zRAM device
-                ${ZRAMDISK_COLOR_GREY}─────────────────────────────────────────────────────
-                ${ZRAMDISK_COLOR_BLUE_BOLD}bench${ZRAMDISK_COLOR_GREY} → show benchmark results
-                ${ZRAMDISK_COLOR_GREY}        (benchmark not actually performed)
-                ${ZRAMDISK_COLOR_BLUE_BOLD}error${ZRAMDISK_COLOR_GREY} → list of possible errors
-                ${ZRAMDISK_COLOR_BLUE_BOLD}trouble${ZRAMDISK_COLOR_GREY} → verbose troubleshooting
-                ${ZRAMDISK_COLOR_GREY}─────────────────────────────────────────────────────
-                ${ZRAMDISK_COLOR_BLUE_BOLD}diag${ZRAMDISK_COLOR_GREY} → perform a diagnosis and display results
-                ${ZRAMDISK_COLOR_BLUE_BOLD}diag --dmsg${ZRAMDISK_COLOR_GREY} → show kernel logs
-                ${ZRAMDISK_COLOR_BLUE_BOLD}diag --services${ZRAMDISK_COLOR_GREY} → show systemd services
-                ${ZRAMDISK_COLOR_BLUE_BOLD}status${ZRAMDISK_COLOR_GREY} → same as above
-                ${ZRAMDISK_COLOR_BLUE_BOLD}diagnose ${ZRAMDISK_COLOR_GREY} → verbose text output of diagnostic results
-                ${ZRAMDISK_COLOR_GREY}─────────────────────────────────────────────────────
-                ${ZRAMDISK_COLOR_BLUE_BOLD}debug on/off${ZRAMDISK_COLOR_GREY} → turn on/off debug mode
-                ${ZRAMDISK_COLOR_BLUE_BOLD}help${ZRAMDISK_COLOR_GREY} → display help
-                ${ZRAMDISK_COLOR_GREY}─────────────────────────────────────────────────────
-                ${ZRAMDISK_COLOR_BLUE_BOLD}restore-prompt${ZRAMDISK_COLOR_GREY} → restore original prompt
-                ${ZRAMDISK_COLOR_GREY}─────────────────────────────────────────────────────
+body=("
+${ZRAMDISK_COLOR_CYAN}   zramdisk${ZRAMDISK_COLOR_BLUE_BOLD} menu${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_GREY_DIM}─────────────────────────────────────────────────────${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_BLUE_BOLD}setup${ZRAMDISK_COLOR_GREY} → create a zRAM device${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_BLUE_BOLD}remove${ZRAMDISK_COLOR_GREY} → remove one or all zRAM devices${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_GREY_DIM}─────────────────────────────────────────────────────${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_BLUE_BOLD}mount${ZRAMDISK_COLOR_NC} | ${ZRAMDISK_COLOR_BLUE_BOLD}on${ZRAMDISK_COLOR_GREY} → mount an existing zRAM device${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_BLUE_BOLD}umount${ZRAMDISK_COLOR_NC} | ${ZRAMDISK_COLOR_BLUE_BOLD}unmount${ZRAMDISK_COLOR_NC} | ${ZRAMDISK_COLOR_BLUE_BOLD}off${ZRAMDISK_COLOR_GREY} → unmount a zRAM device${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_GREY_DIM}─────────────────────────────────────────────────────${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_BLUE_BOLD}bench${ZRAMDISK_COLOR_GREY} → show benchmark results${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_GREY}        (benchmark not actually performed)${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_BLUE_BOLD}error${ZRAMDISK_COLOR_GREY} → list of possible errors${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_BLUE_BOLD}trouble${ZRAMDISK_COLOR_GREY} → verbose troubleshooting${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_GREY_DIM}─────────────────────────────────────────────────────${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_BLUE_BOLD}diag${ZRAMDISK_COLOR_GREY} → perform a diagnosis and display results${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_BLUE_BOLD}diag --dmsg${ZRAMDISK_COLOR_GREY} → show kernel logs${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_BLUE_BOLD}diag --services${ZRAMDISK_COLOR_GREY} → show systemd services${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_BLUE_BOLD}status${ZRAMDISK_COLOR_GREY} → same as above${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_BLUE_BOLD}diagnose ${ZRAMDISK_COLOR_GREY} → verbose text output of diagnostic results${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_GREY_DIM}─────────────────────────────────────────────────────${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_BLUE_BOLD}debug on/off${ZRAMDISK_COLOR_GREY} → turn on/off debug mode${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_BLUE_BOLD}help${ZRAMDISK_COLOR_GREY} → display help${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_GREY_DIM}─────────────────────────────────────────────────────${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_BLUE_BOLD}restore-prompt${ZRAMDISK_COLOR_GREY} → restore original prompt${ZRAMDISK_COLOR_NC}
+            ${ZRAMDISK_COLOR_GREY_DIM}─────────────────────────────────────────────────────${ZRAMDISK_COLOR_NC}
 "
     )
 zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC} Reached footer." >&2
@@ -343,7 +344,7 @@ zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC
 zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC} Reached zramdisk_print_box." >&2
 
     zramdisk_print_box \
-    "${title[@]}" \
+    "${title}" \
     "${body[@]}" \
     "${footer[@]}"
 
@@ -414,21 +415,19 @@ zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC
         plugin_enabled="${ZRAMDISK_COLOR_RED}⚠"
     fi
 
-title=(
-"zRAM Disk Menu"
-)
+title=("zRAM Disk Menu")
 
 body=("
 ${ZRAMDISK_COLOR_CYAN} 1) ${menu_options}
-${ZRAMDISK_COLOR_CYAN} 2) ${ZRAMDISK_COLOR_YELLOW_BOLD}Remove zRAM disk(s)${ZRAMDISK_COLOR_NC}
-${ZRAMDISK_COLOR_CYAN} 3) ${ZRAMDISK_COLOR_YELLOW_BOLD}Mount zRAM device${ZRAMDISK_COLOR_NC}
-${ZRAMDISK_COLOR_CYAN} 4) ${ZRAMDISK_COLOR_YELLOW_BOLD}Unmount zRAM device${ZRAMDISK_COLOR_NC}
-${ZRAMDISK_COLOR_CYAN} 5) ${ZRAMDISK_COLOR_YELLOW_BOLD}Show plugin status & diagnostics${ZRAMDISK_COLOR_NC}
-${ZRAMDISK_COLOR_CYAN} 6) ${ZRAMDISK_COLOR_YELLOW_BOLD}Show some benchmark results${ZRAMDISK_COLOR_NC}
-${ZRAMDISK_COLOR_GREY}    (benchmark not actually performed)${ZRAMDISK_COLOR_NC}
-${ZRAMDISK_COLOR_CYAN} 7) ${ZRAMDISK_COLOR_YELLOW_BOLD}Unload plugin${ZRAMDISK_COLOR_NC}
-${ZRAMDISK_COLOR_CYAN} 8) ${ZRAMDISK_COLOR_YELLOW_BOLD}Help${ZRAMDISK_COLOR_NC}
-${ZRAMDISK_COLOR_CYAN} 0) ${ZRAMDISK_COLOR_YELLOW_BOLD}Exit${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} 2) ${ZRAMDISK_COLOR_YELLOW_BOLD}Remove zRAM disk(s)
+${ZRAMDISK_COLOR_CYAN} 3) ${ZRAMDISK_COLOR_YELLOW_BOLD}Mount zRAM device
+${ZRAMDISK_COLOR_CYAN} 4) ${ZRAMDISK_COLOR_YELLOW_BOLD}Unmount zRAM device
+${ZRAMDISK_COLOR_CYAN} 5) ${ZRAMDISK_COLOR_YELLOW_BOLD}Show plugin status & diagnostics
+${ZRAMDISK_COLOR_CYAN} 6) ${ZRAMDISK_COLOR_YELLOW_BOLD}Show some benchmark results
+${ZRAMDISK_COLOR_GREY}    (benchmark not actually performed)
+${ZRAMDISK_COLOR_CYAN} 7) ${ZRAMDISK_COLOR_YELLOW_BOLD}Unload plugin
+${ZRAMDISK_COLOR_CYAN} 8) ${ZRAMDISK_COLOR_YELLOW_BOLD}Help
+${ZRAMDISK_COLOR_CYAN} 0) ${ZRAMDISK_COLOR_YELLOW_BOLD}Exit
 ${ZRAMDISK_COLOR_CYAN} c) ${zramdisk_color_toggle}
 ${ZRAMDISK_COLOR_CYAN} d) ${ZRAMDISK_COLOR_YELLOW_BOLD}Debug On/Off ${ZRAMDISK_COLOR_NC}(Status: ${status_debug}${ZRAMDISK_COLOR_NC})
 ${ZRAMDISK_COLOR_CYAN} n) ${ZRAMDISK_COLOR_YELLOW_BOLD}Notification settings ${ZRAMDISK_COLOR_NC}(${n_setting})${ZRAMDISK_COLOR_NC}
