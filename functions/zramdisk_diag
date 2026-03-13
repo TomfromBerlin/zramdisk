@@ -70,43 +70,43 @@ zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_diag:${ZRAMDISK_COLOR_NC} Reache
     # ------------------------------------------------------
     local status_debug plugin_enabled status_{mdir,mp,kernel}
     # Check if plugin is loaded
-    if [[ ${zsh_loaded_plugins[-1]} != */zramdisk && -z ${fpath[(r)${0:h}]} && ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+    if [[ ${zsh_loaded_plugins[-1]} != */zramdisk && -z ${fpath[(r)${0:h}]} && ! -f "${ZRAMDISK_PLUGIN_DIR}/color" ]] ; then
         plugin_enabled="🟢"
     elif
         [[ ${zsh_loaded_plugins[-1]} != */zramdisk && -z ${fpath[(r)${0:h}]} ]] ; then
         plugin_enabled="⚪"
     elif
-        [[ ${zsh_loaded_plugins[-1]} == */zramdisk && -z ${fpath[(r)${0:h}]} && ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+        [[ ${zsh_loaded_plugins[-1]} == */zramdisk && -z ${fpath[(r)${0:h}]} && ! -f "${ZRAMDISK_PLUGIN_DIR}/color" ]] ; then
         plugin_enabled="🔴"
     elif
         [[ ${zsh_loaded_plugins[-1]} == */zramdisk && -z ${fpath[(r)${0:h}]} ]] ; then
         plugin_enabled="⚫"
     fi
     #Check if debug is set on or off
-    if [[ "${zramdisk_debug}" = 1 && -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+    if [[ "${zramdisk_debug}" = 1 && ! -f "${ZRAMDISK_PLUGIN_DIR}/color" ]] ; then
         status_debug="${ZRAMDISK_COLOR_WHITE_FLASH}⚪${ZRAMDISK_COLOR_NC}"
-    elif [[ "${zramdisk_debug}" = 1 && ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+    elif [[ "${zramdisk_debug}" = 1 && -f "${ZRAMDISK_PLUGIN_DIR}/color" ]] ; then
         status_debug="${ZRAMDISK_COLOR_WHITE_FLASH}🟢${ZRAMDISK_COLOR_NC}"
     elif
-        [[ "${zramdisk_debug}" = 0 && -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+        [[ "${zramdisk_debug}" = 0 && ! -f "${ZRAMDISK_PLUGIN_DIR}/color" ]] ; then
         status_debug="⚫"
     elif
-        [[ "${zramdisk_debug}" = 0  && ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+        [[ "${zramdisk_debug}" = 0  && -f "${ZRAMDISK_PLUGIN_DIR}/color" ]] ; then
         status_debug="🔴"
     fi
     # Check default mount directory
     [[ -n "${zramdisk_dir}" ]] && status_mdir="${ZRAMDISK_COLOR_BLUE_BOLD} ${zramdisk_dir}${ZRAMDISK_COLOR_NC}" || status_mdir=" ${ZRAMDISK_COLOR_GREY}n/a${ZRAMDISK_COLOR_NC}"
     # Check if mount directory is mounted
-    if mountpoint -q "${zramdisk_dir}" && [[ ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+    if mountpoint -q "${zramdisk_dir}" && [[ -f "${ZRAMDISK_PLUGIN_DIR}/color" ]] ; then
         status_mp="🟢"
     elif
-        mountpoint -q "${zramdisk_dir}"  && [[ -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]]  ; then
+        mountpoint -q "${zramdisk_dir}"  && [[ ! -f "${ZRAMDISK_PLUGIN_DIR}/color" ]]  ; then
         status_mp="⚪"
     elif
-        ! mountpoint -q "${zramdisk_dir}" && [[ ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]]  ; then
+        ! mountpoint -q "${zramdisk_dir}" && [[ -f "${ZRAMDISK_PLUGIN_DIR}/color" ]]  ; then
         status_mp="🔴"
     elif
-        ! mountpoint -q "${zramdisk_dir}" && [[ -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]]  ; then
+        ! mountpoint -q "${zramdisk_dir}" && [[ ! -f "${ZRAMDISK_PLUGIN_DIR}/color" ]]  ; then
         status_mp="⚫"
     fi
 

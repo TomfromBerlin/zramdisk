@@ -199,8 +199,8 @@ zramdisk_prepare_mount() {
     zramdisk_prepare_mount "$@"
 }
 zramdisk_color() {
-    source "${ZRAMDISK_FUNC_DIR}/zramdisk_no_color"
-    zramdisk_no_color "$@"
+    source "${ZRAMDISK_FUNC_DIR}/zramdisk_color"
+    zramdisk_color "$@"
 }
 zramdisk_no_unit() {
     source "${ZRAMDISK_FUNC_DIR}/zramdisk_size_func"
@@ -380,7 +380,7 @@ zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC
         menu_options="${ZRAMDISK_COLOR_YELLOW_BOLD}Load zram kernel module ${ZRAMDISK_COLOR_NC}with ${ZRAMDISK_COLOR_BLUE_BOLD}sudo modprobe zram ${ZRAMDISK_COLOR_NC}"
     fi
 
-    if [[ ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]]; then
+    if [[ ! -f "${ZRAMDISK_PLUGIN_DIR}/color" ]]; then
         zramdisk_color_toggle="${ZRAMDISK_COLOR_YELLOW_BOLD}Toggle${ZRAMDISK_COLOR_NC} Black & White"
     else
         zramdisk_color_g=$'\e[0;32m'
@@ -401,16 +401,16 @@ zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC
         n_setting=$(echo "${ZRAMDISK_COLOR_GREY}Notification is off${ZRAMDISK_COLOR_NC}")
     fi
 
-    if [[ ${zsh_loaded_plugins[-1]} != */zramdisk && -z ${fpath[(r)${0:h}]} && -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]]; then
+    if [[ ${zsh_loaded_plugins[-1]} != */zramdisk && -z ${fpath[(r)${0:h}]} && ! -f "${ZRAMDISK_PLUGIN_DIR}/color" ]]; then
         plugin_enabled="✓"
     elif
-        [[ ${zsh_loaded_plugins[-1]} != */zramdisk && -z ${fpath[(r)${0:h}]} && ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+        [[ ${zsh_loaded_plugins[-1]} != */zramdisk && -z ${fpath[(r)${0:h}]} && -f "${ZRAMDISK_PLUGIN_DIR}/color" ]] ; then
         plugin_enabled="${ZRAMDISK_COLOR_GREEN}✓"
     elif
-        [[ ${zsh_loaded_plugins[-1]} == */zramdisk && -z ${fpath[(r)${0:h}]} && -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]]; then
+        [[ ${zsh_loaded_plugins[-1]} == */zramdisk && -z ${fpath[(r)${0:h}]} && ! -f "${ZRAMDISK_PLUGIN_DIR}/color" ]]; then
         plugin_enabled="⚠"
     elif
-        [[ ${zsh_loaded_plugins[-1]} == */zramdisk && -z ${fpath[(r)${0:h}]} && ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
+        [[ ${zsh_loaded_plugins[-1]} == */zramdisk && -z ${fpath[(r)${0:h}]} && -f "${ZRAMDISK_PLUGIN_DIR}/color" ]] ; then
         plugin_enabled="${ZRAMDISK_COLOR_RED}⚠"
     fi
 
