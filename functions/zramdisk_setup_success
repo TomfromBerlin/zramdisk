@@ -5,11 +5,11 @@ zramdisk_setup_success() {
     zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_setup:${ZRAMDISK_COLOR_NC} Reached function zramdisk_setup_success" >&2
     local -a title body footer
 
-    title=("${ZRAMDISK_COLOR_YELLOW}Congratulation 🎉 Setup completed.${ZRAMDISK_COLOR_NC}")
+    title=("${ZRAMDISK_COLOR_YELLOW_BOLD}Congratulation 🎉 Setup completed.${ZRAMDISK_COLOR_NC}")
 
     body=(
-        "Device: ${ZRAMDISK_COLOR_BLUE}$zram_device${ZRAMDISK_COLOR_NC}
-mounted on: ${ZRAMDISK_COLOR_BLUE}$zramdisk_dir${ZRAMDISK_COLOR_NC}"
+        "Device: ${ZRAMDISK_COLOR_BLUE_BOLD}$zram_device${ZRAMDISK_COLOR_NC}
+mounted on: ${ZRAMDISK_COLOR_BLUE_BOLD}$zramdisk_dir${ZRAMDISK_COLOR_NC}"
     )
 
     footer=("✅ ${ZRAMDISK_COLOR_GREEN} Your zRAM drive is ready to be used.${ZRAMDISK_COLOR_NC}")

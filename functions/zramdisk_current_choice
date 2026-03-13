@@ -26,7 +26,7 @@ zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_current_choice:${ZRAMDISK_COLOR_
  ✅ Algorithm configuration: ${ZRAMDISK_COLOR_GREEN}$zramdisk_comp_alg${ZRAMDISK_COLOR_NC}"
     )
     footer=(
-"${ZRAMDISK_COLOR_BLUE}Algorithm configuration${ZRAMDISK_COLOR_NC} displays default
+"${ZRAMDISK_COLOR_BLUE_BOLD}Algorithm configuration${ZRAMDISK_COLOR_NC} displays default
 settings if nothing has been selected."
     )
 

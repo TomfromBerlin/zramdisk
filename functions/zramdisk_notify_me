@@ -23,7 +23,7 @@ zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_notify_me:${ZRAMDISK_COLOR_NC} Re
     # ----------------------------------------------------------------------
     local -a title body footer alert
     title=(
-        "${ZRAMDISK_COLOR_YELLOW}Notification setting${ZRAMDISK_COLOR_NC}"
+        "${ZRAMDISK_COLOR_YELLOW_BOLD}Notification setting${ZRAMDISK_COLOR_NC}"
     )
     body=(
 "${ZRAMDISK_COLOR_GREEN} Desktop notification
@@ -38,7 +38,7 @@ ${ZRAMDISK_COLOR_WHITE} prompt configuration will remain unchanged.)${ZRAMDISK_C
 ${ZRAMDISK_COLOR_GREEN} Off
 ${ZRAMDISK_COLOR_WHITE} Turn notification off
 
-${ZRAMDISK_COLOR_YELLOW} Note:${ZRAMDISK_COLOR_NC} Unless you select 'Cancel',
+${ZRAMDISK_COLOR_YELLOW_BOLD} Note:${ZRAMDISK_COLOR_NC} Unless you select 'Cancel',
        Zsh will be completely reloaded.
     ")
     footer=(
@@ -55,7 +55,7 @@ be notified that zramdisk is loaded.${ZRAMDISK_COLOR_NC}"
     # User selection with select
     # ----------------------------------------------------------------------
     echo
-    PS3="${ZRAMDISK_COLOR_BLUE}Your choice (number): ${ZRAMDISK_COLOR_NC}"
+    PS3="${ZRAMDISK_COLOR_BLUE_BOLD}Your choice (number): ${ZRAMDISK_COLOR_NC}"
     select alert in "Desktop" "Prompt" "Off" "Cancel"; do
         if [[ "${alert}" == "Cancel" ]]; then
 

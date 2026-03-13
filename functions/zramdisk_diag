@@ -95,7 +95,7 @@ zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_diag:${ZRAMDISK_COLOR_NC} Reache
         status_debug="🔴"
     fi
     # Check default mount directory
-    [[ -n "${zramdisk_dir}" ]] && status_mdir="${ZRAMDISK_COLOR_BLUE} ${zramdisk_dir}${ZRAMDISK_COLOR_NC}" || status_mdir=" ${ZRAMDISK_COLOR_GREY}n/a${ZRAMDISK_COLOR_NC}"
+    [[ -n "${zramdisk_dir}" ]] && status_mdir="${ZRAMDISK_COLOR_BLUE_BOLD} ${zramdisk_dir}${ZRAMDISK_COLOR_NC}" || status_mdir=" ${ZRAMDISK_COLOR_GREY}n/a${ZRAMDISK_COLOR_NC}"
     # Check if mount directory is mounted
     if mountpoint -q "${zramdisk_dir}" && [[ ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]] ; then
         status_mp="🟢"
@@ -117,7 +117,7 @@ zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_diag:${ZRAMDISK_COLOR_NC} Reache
         status_kernel="${ZRAMDISK_COLOR_GREEN}zram module loaded"
     else
         status_kernel="zram module ${ZRAMDISK_COLOR_RED}not${ZRAMDISK_COLOR_NC} loaded
-                      Try ${ZRAMDISK_COLOR_BLUE} sudo modprobe zram${ZRAMDISK_COLOR_NC}"
+                      Try ${ZRAMDISK_COLOR_BLUE_BOLD} sudo modprobe zram${ZRAMDISK_COLOR_NC}"
     fi
 
     # ------------------------------------------------------
@@ -152,9 +152,9 @@ zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_diag:${ZRAMDISK_COLOR_NC} Reache
             (( ${st} == 1 )) && st_c="${ZRAMDISK_COLOR_GREEN}${st}${ZRAMDISK_COLOR_NC}" || st_c="${ZRAMDISK_COLOR_GREY}${st}${ZRAMDISK_COLOR_NC}"
 
             if (( first )) ; then
-            init_lines+=$(printf '%s  →  initstate=%s %s %s %s' "${ZRAMDISK_COLOR_BLUE}${d[@]}${ZRAMDISK_COLOR_NC}" "${st_c[@]}${ZRAMDISK_COLOR_NC}" "${algo[@]}" "${size[@]}" "${mp[@]}") && first=0
+            init_lines+=$(printf '%s  →  initstate=%s %s %s %s' "${ZRAMDISK_COLOR_BLUE_BOLD}${d[@]}${ZRAMDISK_COLOR_NC}" "${st_c[@]}${ZRAMDISK_COLOR_NC}" "${algo[@]}" "${size[@]}" "${mp[@]}") && first=0
             else
-            init_lines+=$(printf '\n%s  →  initstate=%s %s %s %s' "${ZRAMDISK_COLOR_BLUE}${d[@]}${ZRAMDISK_COLOR_NC}" "${st_c[@]}${ZRAMDISK_COLOR_NC}" "${algo[@]}" "${size[@]}" "${mp[@]}")
+            init_lines+=$(printf '\n%s  →  initstate=%s %s %s %s' "${ZRAMDISK_COLOR_BLUE_BOLD}${d[@]}${ZRAMDISK_COLOR_NC}" "${st_c[@]}${ZRAMDISK_COLOR_NC}" "${algo[@]}" "${size[@]}" "${mp[@]}")
             fi
         fi
     done
@@ -180,7 +180,7 @@ zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_diag:${ZRAMDISK_COLOR_NC} Reache
     # check symbolic link
 #    if [[ -f "$HOME/zramdisk" ]]; then
     if readlink -e "$HOME/zramdisk" >/dev/null ; then
-        local symlink="${ZRAMDISK_COLOR_CYAN}with symlink:${ZRAMDISK_COLOR_BLUE}  $HOME/zramdisk${ZRAMDISK_COLOR_NC}"
+        local symlink="${ZRAMDISK_COLOR_CYAN}with symlink:${ZRAMDISK_COLOR_BLUE_BOLD}  $HOME/zramdisk${ZRAMDISK_COLOR_NC}"
     fi
 
     # ------------------------------------------------------
@@ -188,7 +188,7 @@ zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_diag:${ZRAMDISK_COLOR_NC} Reache
     # ------------------------------------------------------
     local -a title body footer msg
     title=(
-"${ZRAMDISK_COLOR_YELLOW}==== ZRAM status & diagnostics ===="
+"${ZRAMDISK_COLOR_YELLOW_BOLD}==== ZRAM status & diagnostics ===="
     )
     body=("
 ${ZRAMDISK_COLOR_CYAN}Plugin loaded: ${plugin_enabled}     ${ZRAMDISK_COLOR_CYAN}Debug mode: ${status_debug}
@@ -211,13 +211,13 @@ ${ZRAMDISK_COLOR_CYAN}Device(s):
 ${init_lines[@]}
 "
     )
-    footer=("${ZRAMDISK_COLOR_YELLOW}==== End of status & diagnostics ====")
+    footer=("${ZRAMDISK_COLOR_YELLOW_BOLD}==== End of status & diagnostics ====")
 
     msg=(
 " Get more zRAM related information:
-${ZRAMDISK_COLOR_CYAN} systemd services${ZRAMDISK_COLOR_NC}      → ${ZRAMDISK_COLOR_BLUE}zramdisk diag --services${ZRAMDISK_COLOR_NC}
-${ZRAMDISK_COLOR_CYAN} kernel logs${ZRAMDISK_COLOR_NC}           → ${ZRAMDISK_COLOR_BLUE}zramdisk diag --dmsg${ZRAMDISK_COLOR_NC}
-${ZRAMDISK_COLOR_CYAN} verbose diagnostics${ZRAMDISK_COLOR_NC}   → ${ZRAMDISK_COLOR_BLUE}zramdisk diagnose${ZRAMDISK_COLOR_NC}"
+${ZRAMDISK_COLOR_CYAN} systemd services${ZRAMDISK_COLOR_NC}      → ${ZRAMDISK_COLOR_BLUE_BOLD}zramdisk diag --services${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} kernel logs${ZRAMDISK_COLOR_NC}           → ${ZRAMDISK_COLOR_BLUE_BOLD}zramdisk diag --dmsg${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} verbose diagnostics${ZRAMDISK_COLOR_NC}   → ${ZRAMDISK_COLOR_BLUE_BOLD}zramdisk diagnose${ZRAMDISK_COLOR_NC}"
     )
 
 

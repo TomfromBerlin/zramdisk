@@ -25,11 +25,11 @@ zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_setup:${ZRAMDISK_COLOR_NC} Reache
     local -a title body footer msg input
 
     title=(
-    "${ZRAMDISK_COLOR_YELLOW}Configuration file found.${ZRAMDISK_COLOR_NC}"
+    "${ZRAMDISK_COLOR_YELLOW_BOLD}Configuration file found.${ZRAMDISK_COLOR_NC}"
     )
     body=(
     "
-${ZRAMDISK_COLOR_YELLOW}Should the device ${ZRAMDISK_COLOR_BLUE}${zram_device}${ZRAMDISK_COLOR_YELLOW} be created?
+${ZRAMDISK_COLOR_YELLOW_BOLD}Should the device ${ZRAMDISK_COLOR_BLUE_BOLD}${zram_device}${ZRAMDISK_COLOR_YELLOW_BOLD} be created?
 
 Current configuration:
 zRAM Device = ${zram_device}
@@ -40,7 +40,7 @@ Mountpoint = ${zramdisk_dir}
     )
 
     footer=(
-"Select ${ZRAMDISK_COLOR_BLUE}[Y]${ZRAMDISK_COLOR_NC}es or ${ZRAMDISK_COLOR_RED}[n]${ZRAMDISK_COLOR_NC}o.
+"Select ${ZRAMDISK_COLOR_BLUE_BOLD}[Y]${ZRAMDISK_COLOR_NC}es or ${ZRAMDISK_COLOR_RED}[n]${ZRAMDISK_COLOR_NC}o.
 ${ZRAMDISK_COLOR_RED}CTRL-C${ZRAMDISK_COLOR_NC} to abort"
     )
 

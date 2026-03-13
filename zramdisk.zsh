@@ -335,7 +335,7 @@ body=("${ZRAMDISK_COLOR_GREEN}Usage:${ZRAMDISK_COLOR_CYAN} zramdisk${ZRAMDISK_CO
     )
 zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC} Reached footer." >&2
 footer=(
-"${ZRAMDISK_COLOR_YELLOW}Example: ${ZRAMDISK_COLOR_BLUE_BOLD}zramdisk remove${ZRAMDISK_COLOR_NC}
+"${ZRAMDISK_COLOR_YELLOW_BOLD}Example: ${ZRAMDISK_COLOR_BLUE_BOLD}zramdisk remove${ZRAMDISK_COLOR_NC}
 Press any key..."
 )
 zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC} Reached msg." >&2
@@ -374,14 +374,14 @@ zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC
     
     if lsmod | grep -q '^zram'; then
         status_kernel="${ZRAMDISK_COLOR_GREEN}zram module loaded${ZRAMDISK_COLOR_NC}"
-        menu_options="${ZRAMDISK_COLOR_YELLOW}Create / Setup zRAM${ZRAMDISK_COLOR_NC}"
+        menu_options="${ZRAMDISK_COLOR_YELLOW_BOLD}Create / Setup zRAM${ZRAMDISK_COLOR_NC}"
     else
         status_kernel="zram kernel module ${ZRAMDISK_COLOR_RED}not${ZRAMDISK_COLOR_NC} loaded - press${ZRAMDISK_COLOR_BLUE_BOLD} 1 ${ZRAMDISK_COLOR_NC} to load it"
-        menu_options="${ZRAMDISK_COLOR_YELLOW}Load zram kernel module ${ZRAMDISK_COLOR_NC}with ${ZRAMDISK_COLOR_BLUE_BOLD}sudo modprobe zram ${ZRAMDISK_COLOR_NC}"
+        menu_options="${ZRAMDISK_COLOR_YELLOW_BOLD}Load zram kernel module ${ZRAMDISK_COLOR_NC}with ${ZRAMDISK_COLOR_BLUE_BOLD}sudo modprobe zram ${ZRAMDISK_COLOR_NC}"
     fi
 
     if [[ ! -f "${ZRAMDISK_PLUGIN_DIR}/no_color" ]]; then
-        zramdisk_color_toggle="${ZRAMDISK_COLOR_YELLOW}Toggle${ZRAMDISK_COLOR_NC} Black & White"
+        zramdisk_color_toggle="${ZRAMDISK_COLOR_YELLOW_BOLD}Toggle${ZRAMDISK_COLOR_NC} Black & White"
     else
         zramdisk_color_g=$'\e[0;32m'
         zramdisk_color_r=$'\e[0;31m'
@@ -420,22 +420,22 @@ title=(
 
 body=("
 ${ZRAMDISK_COLOR_CYAN} 1) ${menu_options}
-${ZRAMDISK_COLOR_CYAN} 2) ${ZRAMDISK_COLOR_YELLOW}Remove zRAM disk(s)${ZRAMDISK_COLOR_NC}
-${ZRAMDISK_COLOR_CYAN} 3) ${ZRAMDISK_COLOR_YELLOW}Mount zRAM device${ZRAMDISK_COLOR_NC}
-${ZRAMDISK_COLOR_CYAN} 4) ${ZRAMDISK_COLOR_YELLOW}Unmount zRAM device${ZRAMDISK_COLOR_NC}
-${ZRAMDISK_COLOR_CYAN} 5) ${ZRAMDISK_COLOR_YELLOW}Show plugin status & diagnostics${ZRAMDISK_COLOR_NC}
-${ZRAMDISK_COLOR_CYAN} 6) ${ZRAMDISK_COLOR_YELLOW}Show some benchmark results${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} 2) ${ZRAMDISK_COLOR_YELLOW_BOLD}Remove zRAM disk(s)${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} 3) ${ZRAMDISK_COLOR_YELLOW_BOLD}Mount zRAM device${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} 4) ${ZRAMDISK_COLOR_YELLOW_BOLD}Unmount zRAM device${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} 5) ${ZRAMDISK_COLOR_YELLOW_BOLD}Show plugin status & diagnostics${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} 6) ${ZRAMDISK_COLOR_YELLOW_BOLD}Show some benchmark results${ZRAMDISK_COLOR_NC}
 ${ZRAMDISK_COLOR_GREY}    (benchmark not actually performed)${ZRAMDISK_COLOR_NC}
-${ZRAMDISK_COLOR_CYAN} 7) ${ZRAMDISK_COLOR_YELLOW}Unload plugin${ZRAMDISK_COLOR_NC}
-${ZRAMDISK_COLOR_CYAN} 8) ${ZRAMDISK_COLOR_YELLOW}Help${ZRAMDISK_COLOR_NC}
-${ZRAMDISK_COLOR_CYAN} 0) ${ZRAMDISK_COLOR_YELLOW}Exit${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} 7) ${ZRAMDISK_COLOR_YELLOW_BOLD}Unload plugin${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} 8) ${ZRAMDISK_COLOR_YELLOW_BOLD}Help${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} 0) ${ZRAMDISK_COLOR_YELLOW_BOLD}Exit${ZRAMDISK_COLOR_NC}
 ${ZRAMDISK_COLOR_CYAN} c) ${zramdisk_color_toggle}
-${ZRAMDISK_COLOR_CYAN} d) ${ZRAMDISK_COLOR_YELLOW}Debug On/Off ${ZRAMDISK_COLOR_NC}(Status: ${status_debug}${ZRAMDISK_COLOR_NC})
-${ZRAMDISK_COLOR_CYAN} n) ${ZRAMDISK_COLOR_YELLOW}Notification settings ${ZRAMDISK_COLOR_NC}(${n_setting})${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} d) ${ZRAMDISK_COLOR_YELLOW_BOLD}Debug On/Off ${ZRAMDISK_COLOR_NC}(Status: ${status_debug}${ZRAMDISK_COLOR_NC})
+${ZRAMDISK_COLOR_CYAN} n) ${ZRAMDISK_COLOR_YELLOW_BOLD}Notification settings ${ZRAMDISK_COLOR_NC}(${n_setting})${ZRAMDISK_COLOR_NC}
 "
 )
 
-footer=("${ZRAMDISK_COLOR_GREEN}Info: ${ZRAMDISK_COLOR_YELLOW} [zramdisk]${ZRAMDISK_COLOR_NC} Plugin loaded: ${plugin_enabled}${ZRAMDISK_COLOR_NC}
+footer=("${ZRAMDISK_COLOR_GREEN}Info: ${ZRAMDISK_COLOR_YELLOW_BOLD} [zramdisk]${ZRAMDISK_COLOR_NC} Plugin loaded: ${plugin_enabled}${ZRAMDISK_COLOR_NC}
 ${status_kernel}")
 
 msg=(

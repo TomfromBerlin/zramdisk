@@ -61,8 +61,8 @@ zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_select_existing_device:${ZRAMDISK
 
         local -a first first_line other_lines
         first=1
-        first_line=$(printf '%s  →  initstate=%s %s %s %s' "${ZRAMDISK_COLOR_BLUE}${d}${ZRAMDISK_COLOR_NC}" "${st_c}${ZRAMDISK_COLOR_NC}" "${algo}" "${size}" "${mp[@]}")
-        other_lines=$(printf '%s  →  initstate=%s %s %s %s' "${ZRAMDISK_COLOR_BLUE}${d}${ZRAMDISK_COLOR_NC}" "${st_c}${ZRAMDISK_COLOR_NC}" "${algo}" "${size}" "${mp[@]}")
+        first_line=$(printf '%s  →  initstate=%s %s %s %s' "${ZRAMDISK_COLOR_BLUE_BOLD}${d}${ZRAMDISK_COLOR_NC}" "${st_c}${ZRAMDISK_COLOR_NC}" "${algo}" "${size}" "${mp[@]}")
+        other_lines=$(printf '%s  →  initstate=%s %s %s %s' "${ZRAMDISK_COLOR_BLUE_BOLD}${d}${ZRAMDISK_COLOR_NC}" "${st_c}${ZRAMDISK_COLOR_NC}" "${algo}" "${size}" "${mp[@]}")
         if ((first)); then
             init_lines+=("${first_line}") && first=0
         else
@@ -71,7 +71,7 @@ zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_select_existing_device:${ZRAMDISK
         done
     else
         local -a title body footer
-        title=("${ZRAMDISK_COLOR_YELLOW}Select zRAM Device${ZRAMDISK_COLOR_NC}")
+        title=("${ZRAMDISK_COLOR_YELLOW_BOLD}Select zRAM Device${ZRAMDISK_COLOR_NC}")
         footer=("No seltectable zRAM devices found. Exiting.")
 
 
@@ -84,7 +84,7 @@ zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_select_existing_device:${ZRAMDISK
     # ----------------------------------------------------------------------
     local -a title body footer
     title=(
-        "${ZRAMDISK_COLOR_YELLOW}Select zRAM Device${ZRAMDISK_COLOR_NC}"
+        "${ZRAMDISK_COLOR_YELLOW_BOLD}Select zRAM Device${ZRAMDISK_COLOR_NC}"
     )
     body=(
         "Available zRAM devices:
@@ -106,7 +106,7 @@ ${init_lines[@]}"
     # User selection with select
     # ----------------------------------------------------------------------
     echo
-    PS3="${ZRAMDISK_COLOR_YELLOW}Your choice (number): ${ZRAMDISK_COLOR_NC}"
+    PS3="${ZRAMDISK_COLOR_YELLOW_BOLD}Your choice (number): ${ZRAMDISK_COLOR_NC}"
     select chosen_device in "${zram_devices[@]}" "Cancel"; do
         if [[ "$chosen_device" == "Cancel" ]]; then
 
@@ -128,7 +128,7 @@ ${init_lines[@]}"
                     title="${ZRAMDISK_COLOR_RED}Device is mounted${ZRAMDISK_COLOR_NC}"
                     footer=(
 "The selected device ${ZRAMDISK_COLOR_CYAN}${zram_device}${ZRAMDISK_COLOR_NC} is already mounted
-at ${ZRAMDISK_COLOR_BLUE}${mp}${ZRAMDISK_COLOR_NC}"
+at ${ZRAMDISK_COLOR_BLUE_BOLD}${mp}${ZRAMDISK_COLOR_NC}"
                     )
 
                     zramdisk_print_box \
@@ -150,7 +150,7 @@ at ${ZRAMDISK_COLOR_BLUE}${mp}${ZRAMDISK_COLOR_NC}"
                 "Selected device: ${ZRAMDISK_COLOR_CYAN}${chosen_device##*/}${ZRAMDISK_COLOR_NC}"
             )
             msg=(
-                "Are you sure you want to mount this device?${ZRAMDISK_COLOR_YELLOW}
+                "Are you sure you want to mount this device?${ZRAMDISK_COLOR_YELLOW_BOLD}
             Confirm [Y/n]: ${ZRAMDISK_COLOR_NC}"
             )
 
