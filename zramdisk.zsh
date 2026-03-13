@@ -3,7 +3,7 @@
 #     Everything below this line comes with no warranty of any kind.     #
 #                 Use these file at your own risk!                       #
 #                                                                        #
-# project start: 2025-10 | first release: 2026-02 | last update: 2026-02 #
+# project start: 2025-10 | first release: 2026-02 | last update: 2026-03 #
 ##########################################################################
 #                                                                        #
 # The MIT license applies to this and all related files.                 #
