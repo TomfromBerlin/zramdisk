@@ -12,7 +12,7 @@
 
 # zramdisk
 
-[German README](https://github.com/TomfromBerlin/zramdisk/README(de).md)
+[German README](https://github.com/TomfromBerlin/zramdisk/blob/main/README(de).md)
 
 ## ✨ Features
 
