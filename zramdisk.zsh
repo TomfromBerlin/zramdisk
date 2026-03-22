@@ -336,8 +336,9 @@ ${ZRAMDISK_COLOR_CYAN}   zramdisk${ZRAMDISK_COLOR_BLUE_BOLD} menu${ZRAMDISK_COLO
     )
 zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC} Reached footer." >&2
 footer=(
-"${ZRAMDISK_COLOR_YELLOW_BOLD}Example: ${ZRAMDISK_COLOR_BLUE_BOLD}zramdisk remove${ZRAMDISK_COLOR_NC}
-Press any key..."
+"
+${ZRAMDISK_COLOR_YELLOW_BOLD}Example: ${ZRAMDISK_COLOR_BLUE_BOLD}zramdisk remove${ZRAMDISK_COLOR_NC}
+"
 )
 zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC} Reached msg." >&2
 # msg=()
@@ -348,9 +349,6 @@ zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC
     "${body[@]}" \
     "${footer[@]}"
 
-    read -sk 1
-
-    zramdisk_menu
 }
 
 # ────────────────────────────────────────────────────────────────
@@ -360,6 +358,8 @@ zramdisk_menu() {
 zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC} Reached function 'menu'." >&2
     local variables="{g,r,y,b,c,m,w,n,toggle}"
     local -a title body msg footer choice n_setting status_debug plugin_enabled zramdisk_color_{g,r,y,b,c,m,w,n,toggle}
+
+    (( ! zramdisk_debug )) && zramdisk_debug=0
 
     if [[ "${zramdisk_debug}" = 1 && ! -f "${ZRAMDISK_PLUGIN_DIR}/color" ]] ; then
         status_debug="${ZRAMDISK_COLOR_WHITE_FLASH}⚪${ZRAMDISK_COLOR_NC}"
@@ -381,7 +381,7 @@ zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC
         menu_options="${ZRAMDISK_COLOR_YELLOW_BOLD}Load zram kernel module ${ZRAMDISK_COLOR_NC}with ${ZRAMDISK_COLOR_BLUE_BOLD}sudo modprobe zram ${ZRAMDISK_COLOR_NC}"
     fi
 
-    if [[ ! -f "${ZRAMDISK_PLUGIN_DIR}/color" ]]; then
+    if [[ -f "${ZRAMDISK_PLUGIN_DIR}/color" ]]; then
         zramdisk_color_toggle="${ZRAMDISK_COLOR_YELLOW_BOLD}Toggle${ZRAMDISK_COLOR_NC} Black & White"
     else
         zramdisk_color_g=$'\e[0;32m'
@@ -395,42 +395,42 @@ zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_zramdisk.zsh:${ZRAMDISK_COLOR_NC
     fi
 
     if [[ -f "${ZRAMDISK_PLUGIN_DIR}/zramdisk_notify_d" ]] ; then
-        n_setting=$(echo "${ZRAMDISK_COLOR_GREEN}Desktop notification is on${ZRAMDISK_COLOR_NC}")
+        n_setting=$(echo "(${ZRAMDISK_COLOR_GREEN}Desktop notification is on${ZRAMDISK_COLOR_NC})")
     elif [[ -f "${ZRAMDISK_PLUGIN_DIR}/zramdisk_notify_p" ]] ; then
-        n_setting=$(echo "${ZRAMDISK_COLOR_GREEN}Prompt notification is on${ZRAMDISK_COLOR_NC}")
+        n_setting=$(echo "(${ZRAMDISK_COLOR_GREEN}Prompt notification is on${ZRAMDISK_COLOR_NC})")
     else
-        n_setting=$(echo "${ZRAMDISK_COLOR_GREY}Notification is off${ZRAMDISK_COLOR_NC}")
+        n_setting=$(echo "${ZRAMDISK_COLOR_GREY}(Notification is off)${ZRAMDISK_COLOR_NC}")
     fi
 
     if [[ ${zsh_loaded_plugins[-1]} != */zramdisk && -z ${fpath[(r)${0:h}]} && ! -f "${ZRAMDISK_PLUGIN_DIR}/color" ]]; then
         plugin_enabled="✓"
     elif
         [[ ${zsh_loaded_plugins[-1]} != */zramdisk && -z ${fpath[(r)${0:h}]} && -f "${ZRAMDISK_PLUGIN_DIR}/color" ]] ; then
-        plugin_enabled="${ZRAMDISK_COLOR_GREEN}✓"
+        plugin_enabled="${ZRAMDISK_COLOR_GREEN}✓${ZRAMDISK_COLOR_NC}"
     elif
         [[ ${zsh_loaded_plugins[-1]} == */zramdisk && -z ${fpath[(r)${0:h}]} && ! -f "${ZRAMDISK_PLUGIN_DIR}/color" ]]; then
         plugin_enabled="⚠"
     elif
         [[ ${zsh_loaded_plugins[-1]} == */zramdisk && -z ${fpath[(r)${0:h}]} && -f "${ZRAMDISK_PLUGIN_DIR}/color" ]] ; then
-        plugin_enabled="${ZRAMDISK_COLOR_RED}⚠"
+        plugin_enabled="${ZRAMDISK_COLOR_RED}⚠${ZRAMDISK_COLOR_NC}"
     fi
 
 title=("zRAM Disk Menu")
 
 body=("
-${ZRAMDISK_COLOR_CYAN} 1) ${menu_options}
-${ZRAMDISK_COLOR_CYAN} 2) ${ZRAMDISK_COLOR_YELLOW_BOLD}Remove zRAM disk(s)
-${ZRAMDISK_COLOR_CYAN} 3) ${ZRAMDISK_COLOR_YELLOW_BOLD}Mount zRAM device
-${ZRAMDISK_COLOR_CYAN} 4) ${ZRAMDISK_COLOR_YELLOW_BOLD}Unmount zRAM device
-${ZRAMDISK_COLOR_CYAN} 5) ${ZRAMDISK_COLOR_YELLOW_BOLD}Show plugin status & diagnostics
-${ZRAMDISK_COLOR_CYAN} 6) ${ZRAMDISK_COLOR_YELLOW_BOLD}Show some benchmark results
-${ZRAMDISK_COLOR_GREY}    (benchmark not actually performed)
-${ZRAMDISK_COLOR_CYAN} 7) ${ZRAMDISK_COLOR_YELLOW_BOLD}Unload plugin
-${ZRAMDISK_COLOR_CYAN} 8) ${ZRAMDISK_COLOR_YELLOW_BOLD}Help
-${ZRAMDISK_COLOR_CYAN} 0) ${ZRAMDISK_COLOR_YELLOW_BOLD}Exit
-${ZRAMDISK_COLOR_CYAN} c) ${zramdisk_color_toggle}
-${ZRAMDISK_COLOR_CYAN} d) ${ZRAMDISK_COLOR_YELLOW_BOLD}Debug On/Off ${ZRAMDISK_COLOR_NC}(Status: ${status_debug}${ZRAMDISK_COLOR_NC})
-${ZRAMDISK_COLOR_CYAN} n) ${ZRAMDISK_COLOR_YELLOW_BOLD}Notification settings ${ZRAMDISK_COLOR_NC}(${n_setting})${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} 1)${ZRAMDISK_COLOR_NC} ${menu_options}
+${ZRAMDISK_COLOR_CYAN} 2)${ZRAMDISK_COLOR_NC} ${ZRAMDISK_COLOR_YELLOW_BOLD}Remove zRAM disk(s)${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} 3)${ZRAMDISK_COLOR_NC} ${ZRAMDISK_COLOR_YELLOW_BOLD}Mount zRAM device${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} 4)${ZRAMDISK_COLOR_NC} ${ZRAMDISK_COLOR_YELLOW_BOLD}Unmount zRAM device${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} 5)${ZRAMDISK_COLOR_NC} ${ZRAMDISK_COLOR_YELLOW_BOLD}Show plugin status & diagnostics${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} 6)${ZRAMDISK_COLOR_NC} ${ZRAMDISK_COLOR_YELLOW_BOLD}Show some benchmark results${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_GREY}    (benchmark not actually performed)${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} 7)${ZRAMDISK_COLOR_NC} ${ZRAMDISK_COLOR_YELLOW_BOLD}Unload plugin${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} 8)${ZRAMDISK_COLOR_NC} ${ZRAMDISK_COLOR_YELLOW_BOLD}Help${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} 0)${ZRAMDISK_COLOR_NC} ${ZRAMDISK_COLOR_YELLOW_BOLD}Exit${ZRAMDISK_COLOR_NC}
+${ZRAMDISK_COLOR_CYAN} c)${ZRAMDISK_COLOR_NC} ${zramdisk_color_toggle}
+${ZRAMDISK_COLOR_CYAN} d)${ZRAMDISK_COLOR_NC} ${ZRAMDISK_COLOR_YELLOW_BOLD}Debug On/Off ${ZRAMDISK_COLOR_NC}(Status: ${status_debug}${ZRAMDISK_COLOR_NC})
+${ZRAMDISK_COLOR_CYAN} n)${ZRAMDISK_COLOR_NC} ${ZRAMDISK_COLOR_YELLOW_BOLD}Notification settings${ZRAMDISK_COLOR_NC} ${n_setting}
 "
 )
 
