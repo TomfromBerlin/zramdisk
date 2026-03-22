@@ -12,6 +12,8 @@
 
 # zramdisk
 
+[German README](https://github.com/TomfromBerlin/zramdisk/README(de).md)
+
 ## ✨ Features
 
 - 🎛️ **Easy handling** - guided installation and operation
@@ -20,8 +22,6 @@
 - 💾 **Display of useful information** - initialization status, used compression algorithm, mountpoint and more
 - 📦 **Plugin Manager Ready** - works with Zsh Unplugged ,oh-my-zsh, zinit, antigen, etc. (should work with every zsh plugin manager that follows the Zsh Plugin Standard)
 - ✅ **Zsh Plugin Standard compliant**
-
----
 
 |Disclaimer:|
 |-|
