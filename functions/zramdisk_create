@@ -50,7 +50,7 @@ zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_create:${ZRAMDISK_COLOR_NC} Reac
             "${msg[@]}"
         return 1
     }
-    read -sk 1
+    read -sk 1 || return 1
 
     zramdisk_create_disk
 }
