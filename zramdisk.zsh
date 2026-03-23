@@ -16,10 +16,13 @@
 ##########################################################################
 emulate -L zsh
 setopt LOCALOPTIONS EXTENDED_GLOB TYPESET_SILENT RC_QUOTES no_auto_pushd
-typeset -gA Plugins
-Plugins[ZRAMDISK]="${0:h}"
-typeset -g ZRAMDISK_PLUGIN_DIR="${0:A:h}"
-typeset -g ZRAMDISK_FUNC_DIR="${ZRAMDISK_PLUGIN_DIR}/functions"
+
+if [[ -z "$zramdisk_debug" ]] ; then
+    zramdisk_debug=0
+else
+    zramdisk_debug="${zramdisk_debug}"
+fi
+
 [[ -z $GIO_EXTRA_MODULES ]] && export GIO_EXTRA_MODULES=/usr/lib/x86_64-linux-gnu/gio/modules/
 
 autoload -Uz is-at-least
@@ -107,6 +110,13 @@ if (( ${#missing_tools[@]} > 0 )); then
     return 1
 fi
 
+typeset -g ZRAMDISK_LOADED=1
+
+add-zsh-hook -Uz winch _zramdisk_winch_handler 2>/dev/null || {
+    # Fallback
+    TRAPWINCH() { zle && zle -R }
+}
+
 CG="/sys/fs/cgroup/user.slice/user-$UID.slice/user@$UID.service/zramdisk"
 mkdir "$CG"
 : ${XDG_STATE_HOME:=$HOME/.local/state}
@@ -118,12 +128,6 @@ HIGH=$((RAM*40/100))
 MAX=$((RAM/2))
 echo $HIGH > "$CG/memory.high"
 echo $MAX  > "$CG/memory.max"
-
-TRAPWINCH() {
-    zle && zle -R
-}
-
-typeset -g ZRAMDISK_LOADED=1
 
 # Load UI helpers & default values
 [[ -f "${ZRAMDISK_FUNC_DIR}/zramdisk_ui" ]] && source "${ZRAMDISK_FUNC_DIR}/zramdisk_ui"
