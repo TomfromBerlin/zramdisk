@@ -78,33 +78,29 @@ zramdisk_normalize_wide_placeholder() {
     setopt LOCALOPTIONS
 
 local distro
-if [[ -f /etc/os-release ]] ; then
-    distro="$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr '[:upper:]' '[:lower:]')"
-# Fallback lsb_release
-elif [[ -z "${distro}" ]] && command -v lsb_release &>/dev/null ; then
-    distro="$(lsb_release -si 2>/dev/null | tr '[:upper:]' '[:lower:]')"
-fi
 # e_w = emoji_widths mapping (emoji → display width in 'O' chars)
+    distro=$(lsb_release -si) || distro="$(awk -F= '/^ID=/ {print $2}' /etc/os-release)" || distro="$(awk -F= '/^ID_LIKE=/ {print $2}' /etc/os-release)" || distro="$(awk -F= '/^NAME=/ {print $2}' /etc/os-release)" || distro="$(awk -F= '/^PRETTY_NAME=/ {print $2}' /etc/os-release)"
+
 case "${distro}" in
-*mint|LinuxMint|*Ubuntu|\"void\"|VoidLinux|voidlinux)
-local -A e_w=(
-    🟢 OO  🔴 OO  🟡 OO  🔵 OO
-    ⚪ OO  ✅ OO  💲 OO  ✔️ OO
-    ⚠️ OO  ❌ OO  🎉 OO  ⚡ OO
-    ⚫ OO
-    ❔ O  🫟 O  ‼️ O  ℹ️ O  ⚙️ O
-)
-;;
-cachyos|Debian|Fedora)
-local -A e_w=(
-    🟢 OO  🔴 OO  🟡 OO  🔵 OO
-    ⚙️ OO  ✅ OO  💲 OO  ✔️ OO
-    ⚠️ OO  ❌ OO  🎉 OO  ⚡ OO
-    ⚫ OO  ⚪ OO  ℹ️ OO
-    ❔ O  🫟 O  ‼️ O
-)
-;;
-esac
+    *mint*|*LinuxMint*|*Ubuntu*|*void*|*VoidLinux*|*voidlinux*)
+    local -A e_w=(
+        🟢 OO  🔴 OO  🟡 OO  🔵 OO
+        ⚪ OO  ✅ OO  💲 OO  ✔️ OO
+        ⚠️ OO  ❌ OO  🎉 OO  ⚡ OO
+        ⚫ OO
+        ❔ O  🫟 O  ‼️ O  ℹ️ O  ⚙️ O
+    )
+    ;;
+    *cachy*|*Cachy*|*debian*|*Debian*|*Fedora*)
+    local -A e_w=(
+        🟢 OO  🔴 OO  🟡 OO  🔵 OO
+        ⚙️ OO  ✅ OO  💲 OO  ✔️ OO
+        ⚠️ OO  ❌ OO  🎉 OO  ⚡ OO
+        ⚫ OO  ⚪ OO  ℹ️ OO  ‼️ OO
+        ❔ O  🫟 O
+    )
+    ;;
+    esac
 
 local em wi s="$1"
 for em wi in ${(kv)e_w}; do
