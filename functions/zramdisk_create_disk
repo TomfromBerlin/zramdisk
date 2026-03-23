@@ -35,7 +35,7 @@ zramdisk_debug " ${ZRAMDISK_COLOR_CYAN}zramdisk_create:${ZRAMDISK_COLOR_NC} Reac
             sleep 0.02
         done
 
-        # 1. algorithmus first!
+        # 1. algorithm first!
         echo "$zramdisk_comp_alg" | sudo tee "$sys/comp_algorithm" >&/dev/null
 
         # optional:
