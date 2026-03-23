@@ -103,7 +103,7 @@ Accepted units:
         # min size
         if (( bytes < min_bytes )); then
             print -P "${ZRAMDISK_COLOR_RED}Too small:${ZRAMDISK_COLOR_NC} Minimum is 16 MiB."
-            read -srk 1
+            read -srk 1 || return 1
             continue
         fi
 
@@ -115,8 +115,6 @@ Accepted units:
     zramdisk_size="$((bytes / 1024 / 1024))M"
     typeset -g zramdisk_size_bytes
     zramdisk_size_bytes=$bytes
-#    zramdisk_current_choice
-    #read -sk 1
     zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_size_func:${ZRAMDISK_COLOR_NC} Success" >&2
     return 0
 }
@@ -225,7 +223,6 @@ zramdisk_debug "${ZRAMDISK_COLOR_CYAN}zramdisk_size_func:${ZRAMDISK_COLOR_NC} Re
         return 1
         ;;
     esac
-#    printf '%s\n%s\n' "$number" "$unit"
     return 0
 }
 #ZRAMDISK_SCRIPT
