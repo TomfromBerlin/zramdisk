@@ -17,7 +17,7 @@
 zramdisk_troubleshooting() {
     emulate -L zsh
     setopt LOCALOPTIONS
-
+clear
 cat <<EOF
     ${ZRAMDISK_COLOR_MAGENTA_DIM}╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
     ${ZRAMDISK_COLOR_MAGENTA_DIM}│${ZRAMDISK_COLOR_NC} First, let's clarify something: we're talking about devices that are stored in RAM and are, by nature, temporary.    ${ZRAMDISK_COLOR_MAGENTA_DIM}│${ZRAMDISK_COLOR_NC}
@@ -66,7 +66,7 @@ EOF
 echo
 sleep 3s
 zramdisk_animtex "Press any key and I'll show you how deep the rabbit hole goes, or CTRL+C..."
-read -sk 1
+read -sk 1 || return 1
 echo
 clear
 cat <<EOF
@@ -116,7 +116,7 @@ cat <<EOF
     However, ${ZRAMDISK_COLOR_BLUE_BOLD}echo 1 | sudo tee /sys/class/zram-control/hot_add${ZRAMDISK_COLOR_NC} may not work.
 
 EOF
-read -sk 1
+read -sk 1 || return 1
 cat <<EOF
     If you try to check with ${ZRAMDISK_COLOR_BLUE_BOLD}sudo cat /sys/class/zram-control/hot_add${ZRAMDISK_COLOR_NC},
     you may get one of the following outputs:
@@ -157,7 +157,7 @@ cat <<EOF
     To remove multiple devices at once, call ${ZRAMDISK_COLOR_BLUE_BOLD}zramdisk remove${ZRAMDISK_COLOR_NC} and select the option to
     automatically remove devices (press the ${ZRAMDISK_COLOR_BLUE_BOLD}a${ZRAMDISK_COLOR_NC} key in the dialog box).
 EOF
-read -sk 1
+read -sk 1 || return 1
 cat <<EOF
 
  4️⃣ ${ZRAMDISK_COLOR_YELLOW_BOLD}Is the zRAM module loaded with a fixed number of devices?${ZRAMDISK_COLOR_NC}
@@ -194,7 +194,7 @@ cat <<EOF
     Therefore check with ${ZRAMDISK_COLOR_BLUE_BOLD}ls /dev/zram*${ZRAMDISK_COLOR_NC} AND ${ZRAMDISK_COLOR_BLUE_BOLD}ls /sys/block/${ZRAMDISK_COLOR_NC}
     If a device exists, but zramctl doesn't know about it → the device was created, but never initialized.
 EOF
-read -sk 1
+read -sk 1 || return 1
 cat <<EOF
 
  8️⃣ ${ZRAMDISK_COLOR_BLUE_BOLD}mem_used_total${ZRAMDISK_COLOR_NC} ${ZRAMDISK_COLOR_YELLOW_BOLD}does not exist${ZRAMDISK_COLOR_NC}
@@ -216,7 +216,7 @@ cat <<EOF
               try ${ZRAMDISK_COLOR_BLUE_BOLD}sudo zramctl -f -s 4G -a zstd${ZRAMDISK_COLOR_NC}. This will search for the next free device id and create
               a new device with this id, a size of 4 GiB and zstd as compression algorithm.
 EOF
-read -sk 1
+read -sk 1 || return 1
 cat <<EOF
 
     ${ZRAMDISK_COLOR_YELLOW_BOLD}How to manually create a zRAM device${ZRAMDISK_COLOR_NC}
@@ -242,7 +242,7 @@ cat <<EOF
     ${ZRAMDISK_COLOR_BLUE_BOLD}sudo modprobe zram num_devices=4${ZRAMDISK_COLOR_NC} ...you know the drill.
 
    ${ZRAMDISK_COLOR_MAGENTA_DIM}╭──────╮
-   │${ZRAMDISK_COLOR_YELLOW_BOLD} Note ${ZRAMDISK_COLOR_MAGENTA_DIM}╰─────────────────────────────────────────────────────────────────────────────────────────╮
+   │${ZRAMDISK_COLOR_YELLOW_BOLD} Note ${ZRAMDISK_COLOR_NC}${ZRAMDISK_COLOR_MAGENTA_DIM}╰─────────────────────────────────────────────────────────────────────────────────────────╮
    │${ZRAMDISK_COLOR_NC} The plugin does not offer functionality for creating zRAM devices with ${ZRAMDISK_COLOR_BLUE_BOLD}modprobe${ZRAMDISK_COLOR_NC}, as we cannot  ${ZRAMDISK_COLOR_MAGENTA_DIM}│
    │${ZRAMDISK_COLOR_NC} know if a swap file exists and how it was created. Of course, we could find this out, but that ${ZRAMDISK_COLOR_MAGENTA_DIM}│
    │${ZRAMDISK_COLOR_NC} would unnecessarily bloat the code and carry a high risk of corrupting existing configurations ${ZRAMDISK_COLOR_MAGENTA_DIM}│
