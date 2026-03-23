@@ -58,7 +58,7 @@ zramdisk_debug "${ZRAMDISK_COLOR_GREEN}zramdisk_benchmark:${ZRAMDISK_COLOR_NC} R
     print -P "${ZRAMDISK_COLOR_MAGENTA_DIM}├${line}┤${ZRAMDISK_COLOR_NC}"
     print -P "${ZRAMDISK_COLOR_MAGENTA_DIM}│${ZRAMDISK_COLOR_BLUE_BOLD} Press any key to continue...                      ${ZRAMDISK_COLOR_MAGENTA_DIM}│${ZRAMDISK_COLOR_NC}"
     print -P "${ZRAMDISK_COLOR_MAGENTA_DIM}╰${line}╯${ZRAMDISK_COLOR_NC}"
-    read -sk 1
+    read -sk 1 || return 1
 echo
 print -P "The following table shows some benchmark results for a ZRAM swap device."
 print -P "${ZRAMDISK_COLOR_MAGENTA_DIM}╭──────────┬──────────────┬───────┬─────────┬──────────────┬─────────────╮${ZRAMDISK_COLOR_NC}"
