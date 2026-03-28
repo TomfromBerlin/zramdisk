@@ -558,3 +558,7 @@ The configuration is written to the `zramdisk.conf` file in the plugin directory
 There may be some marker files such as `notification_p`, `notification_d` or `no_color` that affect user notification about the plugin status or the plugin's appearance (colors vs. no colors).
 
 </details>
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/image?repos=TomfromBerlin/zramdisk&type=date&legend=top-left)](https://www.star-history.com/?repos=TomfromBerlin%2Fzramdisk&type=date&legend=top-left)
